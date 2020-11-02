@@ -1,7 +1,6 @@
 package frc.team832.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.CommandBase;
-import frc.team832.robot.subsystems.TemplateSubsystem;
 
 public class TemplateCommand extends CommandBase {
 

@@ -17,7 +17,9 @@ import frc.team832.lib.power.PDPPortNumber;
 import frc.team832.lib.util.ClosedLoopConfig;
 import frc.team832.lib.util.OscarMath;
 
+@SuppressWarnings("unused")
 public class Constants {
+    @SuppressWarnings("unused")
     public static class DrivetrainValues {
         public static final int LEFT_MASTER_CAN_ID = 1;
         public static final int LEFT_SLAVE_CAN_ID = 2;
@@ -62,7 +64,8 @@ public class Constants {
         public static final DifferentialDriveVoltageConstraint RightAutoVoltageConstraint =
                 new DifferentialDriveVoltageConstraint(RightFF, DriveKinematics, 10);
 
-        private static double Velocity = 1, Acceleration = 1;
+        private static final double Velocity = 1;
+        private static final double Acceleration = 1;
         public static final TrajectoryConfig LeftTrajectoryConfig =
                 new TrajectoryConfig(Velocity, Acceleration)
                         .setKinematics(DriveKinematics)
@@ -73,6 +76,7 @@ public class Constants {
                         .addConstraint(RightAutoVoltageConstraint);
     }
 
+    @SuppressWarnings("unused")
     public static class ShooterValues {
         public static final int PRIMARY_CAN_ID = 2;
         public static final int SECONDARY_CAN_ID = 3;
@@ -124,6 +128,7 @@ public class Constants {
 
     }
 
+    @SuppressWarnings("unused")
     public static class TurretValues {
         public static final int TURRET_MOTOR_CAN_ID = 4;
         public static final int TURRET_ENCODER_DIO_CHANNEL = 0;
@@ -157,6 +162,7 @@ public class Constants {
 
     }
 
+    @SuppressWarnings("unused")
     public static class IntakeValues {
         public static final int INTAKE_MOTOR_CAN_ID = 5;
 
@@ -171,6 +177,7 @@ public class Constants {
         public static final SimpleMotorFeedforward FF = new SimpleMotorFeedforward(kS, kV, kA);
     }
 
+    @SuppressWarnings("unused")
     public static class SpindexerValues {
         public static final int SPIN_MOTOR_CAN_ID = 5;
 
@@ -191,6 +198,7 @@ public class Constants {
 
     }
 
+    @SuppressWarnings("unused")
     public static class ClimberValues {
         public static final int WINCH_CAN_ID = 7;
         public static final int DEPLOY_CAN_ID = 8;
@@ -214,6 +222,7 @@ public class Constants {
         public static double ClimbVelocity = 10;
     }
 
+    @SuppressWarnings("unused")
     public static class WOFValues {
         public static final int SPINNER_CAN_ID = 9;
 
@@ -227,6 +236,7 @@ public class Constants {
         public static final double kF = 0.0;
     }
 
+    @SuppressWarnings("unused")
     public static class PneumaticsValues {
         public static final int PCM_MODULE_NUM = 0;
 
@@ -236,6 +246,7 @@ public class Constants {
         public static final int CLIMB_LOCK_SOLENOID_ID = 3;
     }
 
+    @SuppressWarnings("unused")
     public enum FieldPosition {
         // positions are relative to driver station
         ZeroZero(0, 0, 0),
