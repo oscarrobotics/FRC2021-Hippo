@@ -13,6 +13,7 @@ import frc.team832.lib.driverinput.oi.OperatorInterface;
 import frc.team832.lib.driverinput.oi.SticksDriverOI;
 import frc.team832.lib.driverinput.oi.XboxDriverOI;
 import frc.team832.lib.power.GrouchPDP;
+import frc.team832.robot.subsystems.Drivetrain;
 
 import static frc.team832.robot.Robot.turret;
 
@@ -21,7 +22,7 @@ public class RobotContainer {
     public final GrouchPDP pdp = new GrouchPDP(0);
     public final Compressor pcm = new Compressor(0);
 
-    // Sub
+    // Subsystems
     public final Drivetrain drivetrain = new Drivetrain(pdp);
     public final Vision vision = new Vision(drivetrain);
     public final Intake intake = new Intake(pdp);
