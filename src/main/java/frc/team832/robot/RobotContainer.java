@@ -15,8 +15,6 @@ import frc.team832.lib.driverinput.oi.XboxDriverOI;
 import frc.team832.lib.power.GrouchPDP;
 import frc.team832.robot.subsystems.Drivetrain;
 
-import static frc.team832.robot.Robot.turret;
-
 public class RobotContainer {
 
     public final GrouchPDP pdp = new GrouchPDP(0);
@@ -43,14 +41,6 @@ public class RobotContainer {
 
 
     public RobotContainer() {
-        templateSubsystem = new TemplateSubsystem();
-
-        if (templateSubsystem.initializedSuccessfully) {
-            System.out.println("Template Subsys - INIT OK");
-        } else {
-            System.out.println("Template Subsys - INIT FAIL");
-        }
-
         if (isSticks) {
             driverOI = new SticksDriverOI();
             leftStick = ((SticksDriverOI)driverOI).leftStick;

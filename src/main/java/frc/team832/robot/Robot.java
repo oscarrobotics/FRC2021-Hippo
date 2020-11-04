@@ -13,13 +13,14 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.team832.lib.CANDevice;
 import frc.team832.lib.control.PCM;
 import frc.team832.lib.motorcontrol.NeutralMode;
+import frc.team832.robot.subsystems.Drivetrain;
 
 public class Robot extends TimedRobot {
 
   public final RobotContainer robotContainer = new RobotContainer();
 
   private final Compressor pcm = robotContainer.pcm;
-    private final Drive
+  private final Drivetrain drivetrain = robotContainer.drivetrain;
 
   @Override
   public void robotInit() {
