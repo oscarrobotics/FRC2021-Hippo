@@ -1,6 +1,7 @@
 package frc.team832.robot;
 
 import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunEndCommand;
@@ -20,8 +21,15 @@ public class RobotContainer {
     public final GrouchPDP pdp = new GrouchPDP(0);
     public final Compressor pcm = new Compressor(0);
 
+    public final DriverOI driverOI;
+    public static final boolean isSticks = RobotBase.isReal();
+    public final StratComInterface stratComInterface = new StratComInterface(isSticks ? 2 : 1);
+
+    public Attack3 leftStick;
+    public Extreme3DPro rightStick;
+
     // Subsystems
-    public final Drivetrain drivetrain = new Drivetrain(pdp);
+    public final Drivetrain drivetrain;
     public final Vision vision = new Vision(drivetrain);
     public final Intake intake = new Intake(pdp);
     public final Shooter shooter = new Shooter(pdp);
@@ -31,13 +39,14 @@ public class RobotContainer {
     public final WheelOfFortune wheelOfFortune = new WheelOfFortune();
     public final SuperStructure superStructure = new SuperStructure(intake, shooter, spindexer, turret, vision);
 
-    public final DriverOI driverOI;
-    public static final boolean isSticks = RobotBase.isReal();
-    public final StratComInterface stratComInterface = new StratComInterface(isSticks ? 2 : 1);
-
-
-    public Attack3 leftStick;
-    public Extreme3DPro rightStick;
+    public static final Notifier drivetrainTelemetryNotifier = new Notifier(drivetrain::updateDashboardData);
+    public static final Notifier shooterTelemetryNotifier = new Notifier(shooter::updateDashboardData);
+    public static final Notifier intakeTelemetryNotifier = new Notifier(intake::updateDashboardData);
+    public static final Notifier turretTelemetryNotifier = new Notifier(turret::updateDashboardData);
+    public static final Notifier visionTelemetryNotifier = new Notifier(vision::updateDashboardData);
+    public static final Notifier climberTelemetryNotifier = new Notifier(climber::updateDashboardData);
+    public static final Notifier spindexerTelemetryNotifier = new Notifier(spindexer::updateDashboardData);
+    public static final Notifier superStructureTelemetryNotifier = new Notifier(superStructure::updateDashboardData);
 
 
     public RobotContainer() {
@@ -49,6 +58,8 @@ public class RobotContainer {
             driverOI = new XboxDriverOI();
         }
 
+         drivetrain = new Drivetrain(pdp, driverOI);
+
         if (OperatorInterface.getConnectedControllerCount() > 1) {
             configTestingCommands();
         }
@@ -56,49 +67,9 @@ public class RobotContainer {
 
     private void configureBrandonLayout() {
 
-        stratComInterface.getArcadeBlackRight().whenHeld(new StartEndCommand(() -> superStructure.setState(SuperStructure.SuperstructureState.IDLE),
-                () -> superStructure.setState(SuperStructure.SuperstructureState.IDLE)));
-
-        stratComInterface.getArcadeBlackLeft().whenHeld(new StartEndCommand(() -> superStructure.setState(SuperStructure.SuperstructureState.INTAKE),
-                () -> superStructure.setState(SuperStructure.SuperstructureState.IDLE)));
-        stratComInterface.getArcadeBlackLeft().whenHeld(new RunEndCommand(() -> superStructure.configureSpindexerRPMSlider(stratComInterface.getRightSlider()),
-                superStructure::setSpindexerIntakeRpmDefault));
-
-        stratComInterface.getArcadeWhiteLeft().whenHeld(new StartEndCommand(() -> superStructure.setState(SuperStructure.SuperstructureState.TARGETING),
-                () -> superStructure.setState(SuperStructure.SuperstructureState.IDLE)));
-
-        stratComInterface.getArcadeWhiteRight().whenHeld(new StartEndCommand(() -> superStructure.setState(SuperStructure.SuperstructureState.SHOOTING),
-                () -> superStructure.setState(SuperStructure.SuperstructureState.IDLE)));
-
-
-        stratComInterface.getSingleToggle().whenHeld(new RunEndCommand(() -> climber.adjustHook(stratComInterface.getLeftSlider()), climber::stopExtend));
-        stratComInterface.getSingleToggle().whenReleased(new InstantCommand(climber::retractHook));
-
-        stratComInterface.getSCPlus().whileHeld(new StartClimbGroup(climber, true));
-        stratComInterface.getSCPlus().whenReleased(new InstantCommand(climber::lockClimb));
-
-        stratComInterface.getSCMinus().whileHeld(new StartClimbGroup(climber, false));
-        stratComInterface.getSCMinus().whenReleased(new InstantCommand(climber::lockClimb));
-
-//		stratComInterface.getSCSideTop().whenHeld(new StartEndCommand(wheelOfFortune::extendWOFManipulator, wheelOfFortune::retractWOFManipulator));
-//		stratComInterface.getSC1().whenHeld(new StartEndCommand(wheelOfFortune::spinCounterclockwise, wheelOfFortune::stopSpin, wheelOfFortune));//torque vector up
-//		stratComInterface.getSC3().whenHeld(new StartEndCommand(wheelOfFortune::spinClockwise, wheelOfFortune::stopSpin, wheelOfFortune));//torque vector down
-//		stratComInterface.getSC2().whenHeld(new RunEndCommand(wheelOfFortune::spinThreeTimes, wheelOfFortune::stopSpin, wheelOfFortune));
     }
 
     private void configTestingCommands() {
-        stratComInterface.getArcadeBlackRight().whenPressed(new InstantCommand(intake::extendIntake));
-        stratComInterface.getArcadeBlackRight().whenReleased(new InstantCommand(intake::retractIntake));
 
-//		stratComInterface.getSingleToggle().whenHeld(new RunEndCommand(() -> climber.adjustHook(stratComInterface.getLeftSlider()), climber::stopExtend));
-//		stratComInterface.getSingleToggle().whenReleased(new InstantCommand(climber::retractHook));
-
-        stratComInterface.getSCPlus().whileHeld(new StartClimbGroup(climber, true));
-        stratComInterface.getSCPlus().whenReleased(new StopClimbGroup(climber));
-
-        stratComInterface.getSCMinus().whileHeld(new StartClimbGroup(climber, false));
-        stratComInterface.getSCMinus().whenReleased(new StopClimbGroup(climber));
-
-        stratComInterface.getDoubleToggleUp().whenHeld(new RunEndCommand(() -> turret.setHeadingSlider(stratComInterface.getRightSlider()), () -> turret.setHeadingSlider(0)));
     }
 }

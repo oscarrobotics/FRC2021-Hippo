@@ -8,6 +8,7 @@
 package frc.team832.robot;
 
 import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.team832.lib.CANDevice;
@@ -31,11 +32,11 @@ public class Robot extends TimedRobot {
     } else {
       System.out.println("Drivetrain - init FAILED");
     }
-    drivetrainTelemetryNotifier.startPeriodic(0.02);
+    robotContainer.drivetrainTelemetryNotifier.startPeriodic(0.02);
 
     if (intake.initSuccessful) {
       System.out.println("Intake - init OK");
-      intakeTelemetryNotifier.startPeriodic(0.02);
+      robotContainer.intakeTelemetryNotifier.startPeriodic(0.02);
     } else {
       System.out.println("Intake - init FAILED");
     }
@@ -45,47 +46,46 @@ public class Robot extends TimedRobot {
     } else {
       System.out.println("Vision - init FAILED");
     }
-    visionTelemetryNotifier.startPeriodic(0.02);
+    robotContainer.visionTelemetryNotifier.startPeriodic(0.02);
 
     if (shooter.initSuccessful) {
       System.out.println("Shooter - init OK");
     } else {
       System.out.println("Shooter - init FAILED");
     }
-    shooterTelemetryNotifier.startPeriodic(0.02);
+    robotContainer.shooterTelemetryNotifier.startPeriodic(0.02);
 
     if (turret.initSuccessful) {
       System.out.println("Turret - init OK");
     } else {
       System.out.println("Turret - init FAILED");
     }
-    turretTelemetryNotifier.startPeriodic(0.02);
+    robotContainer.turretTelemetryNotifier.startPeriodic(0.02);
 
     if (spindexer.initSuccessful) {
       System.out.println("Spindexer - init OK");
     } else {
       System.out.println("Spindexer - init FAILED");
     }
-    spindexerTelemetryNotifier.startPeriodic(0.02);
+    robotContainer.spindexerTelemetryNotifier.startPeriodic(0.02);
 
     if (climber.initSuccessful) {
       System.out.println("Climber - init OK");
     } else {
       System.out.println("Climber - init FAILED");
     }
-    climberTelemetryNotifier.startPeriodic(0.02);
+    robotContainer.climberTelemetryNotifier.startPeriodic(0.02);
 
     if (wheelOfFortune.initSuccessful) {
       System.out.println("WheelOfFortune - init OK");
     } else {
       System.out.println("WheelOfFortune - init FAILED");
     }
-
-    superStructureTelemetryNotifier.startPeriodic(0.02);
+    robotContainer.superStructureTelemetryNotifier.startPeriodic(0.02);
 
     CANDevice.printMissingDevices();
-//        autoCommand = new BasicAutonomous(superStructure, drivetrain);
-    autoCommand = new DumbPathAuto(drivetrain);
+//    autoCommand = new BasicAutonomous(superStructure, drivetrain);
+//    autoCommand = new DumbPathAuto(drivetrain);
   }
 
   @Override

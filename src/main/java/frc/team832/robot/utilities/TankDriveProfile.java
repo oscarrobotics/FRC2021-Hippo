@@ -7,8 +7,6 @@ import frc.team832.lib.driverinput.oi.SticksDriverOI;
 import frc.team832.lib.util.OscarMath;
 import frc.team832.robot.Constants;
 
-import static frc.team832.robot.Robot.oi;
-
 public class TankDriveProfile {
 	public final boolean useFF, useCloseLoop;
 	public SmartDiffDrive.LoopMode loopMode;
@@ -61,7 +59,7 @@ public class TankDriveProfile {
 	}
 
 	public StoreDriveSpeeds getTankStraightProfile() {
-		DriveAxesSupplier axes = oi.driverOI.getGreenbergDriveAxes();
+		DriveAxesSupplier axes = oi.getGreenbergDriveAxes();
 		double power;
 
 		power = getNormalPower(-axes.getLeftY());
@@ -70,7 +68,7 @@ public class TankDriveProfile {
 	}
 
 	public StoreDriveSpeeds getTankNormalProfile() {
-		DriveAxesSupplier axes = oi.driverOI.getGreenbergDriveAxes();
+		DriveAxesSupplier axes = oi.getGreenbergDriveAxes();
 		double rightPow, leftPow;
 
 		rightPow = getNormalPower(-axes.getRightY());
@@ -80,7 +78,7 @@ public class TankDriveProfile {
 	}
 
 	public StoreDriveSpeeds getTankRotateProfile() {
-		DriveAxesSupplier axes = oi.driverOI.getGreenbergDriveAxes();
+		DriveAxesSupplier axes = oi.getGreenbergDriveAxes();
 		double rightPow, leftPow;
 		double powerMultiplier = OscarMath.clipMap(Math.abs(axes.getLeftY()), 0, 1, Constants.DrivetrainValues.StickRotateMultiplier, Constants.DrivetrainValues.StickRotateMultiplier * 2);
 
@@ -91,7 +89,7 @@ public class TankDriveProfile {
 	}
 
 	public StoreDriveSpeeds getTankPreciseRotateProfile() {
-		DriveAxesSupplier axes = oi.driverOI.getGreenbergDriveAxes();
+		DriveAxesSupplier axes = oi.getGreenbergDriveAxes();
 		double rightPow, leftPow;
 
 		rightPow = OscarMath.signumPow(axes.getRotation() * Constants.DrivetrainValues.StickRotateMultiplier, 2);
@@ -101,7 +99,7 @@ public class TankDriveProfile {
 	}
 
 	public StoreDriveSpeeds getTankRotateOnCenterProfile() {
-		DriveAxesSupplier axes = oi.driverOI.getGreenbergDriveAxes();
+		DriveAxesSupplier axes = oi.getGreenbergDriveAxes();
 		double rotation;
 
 		rotation = OscarMath.signumPow(axes.getRotation() * Constants.DrivetrainValues.StickRotateOnCenterMultiplier, 3);

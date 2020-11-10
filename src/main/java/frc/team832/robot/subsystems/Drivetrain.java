@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.RunEndCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.team832.lib.drive.SmartDiffDrive;
+import frc.team832.lib.driverinput.oi.DriverOI;
 import frc.team832.lib.driverstation.dashboard.DashboardManager;
 import frc.team832.lib.driverstation.dashboard.DashboardUpdatable;
 import frc.team832.lib.driverstation.dashboard.FalconDashboard;
@@ -19,6 +20,7 @@ import frc.team832.lib.power.GrouchPDP;
 import frc.team832.lib.power.impl.SmartMCAttachedPDPSlot;
 import frc.team832.lib.util.OscarMath;
 import frc.team832.robot.Constants;
+import frc.team832.robot.RobotContainer;
 import frc.team832.robot.utilities.ArcadeDriveProfile;
 import frc.team832.robot.utilities.TankDriveProfile;
 //import frc.team832.robot.utilites.TankDriveProfile;
@@ -41,7 +43,7 @@ public class Drivetrain extends SubsystemBase implements DashboardUpdatable {
 
     private double latestLeftWheelVolts, latestRightWheelVolts;
 
-    private final TankDriveProfile tankProfile = new TankDriveProfile(false, false);
+    private final TankDriveProfile tankProfile;
     private final ArcadeDriveProfile arcadeProfile = new ArcadeDriveProfile();
 
     private final SmartMCAttachedPDPSlot leftMasterSlot, leftSlaveSlot, rightMasterSlot, rightSlaveSlot;
@@ -49,7 +51,7 @@ public class Drivetrain extends SubsystemBase implements DashboardUpdatable {
             dashboard_poseX, dashboard_poseY, dashboard_poseRotation, dashboard_rawLeftPos, ui_poseX, ui_poseY;
 
 
-    public Drivetrain(GrouchPDP pdp) {
+    public Drivetrain(GrouchPDP pdp, DriverOI oi) {
         leftMaster = new CANTalonFX(Constants.DrivetrainValues.LEFT_MASTER_CAN_ID);
         leftSlave = new CANTalonFX(Constants.DrivetrainValues.LEFT_SLAVE_CAN_ID);
         rightMaster = new CANTalonFX(Constants.DrivetrainValues.RIGHT_MASTER_CAN_ID);
@@ -79,6 +81,8 @@ public class Drivetrain extends SubsystemBase implements DashboardUpdatable {
 
         imu = new PigeonIMU(0);
 
+        tankProfile = new TankDriveProfile(oi, false, false);
+
         var defaultStartPose = Constants.FieldPosition.InitLine_CenteredOnPort;
 
         // startPoseChooser
@@ -100,7 +104,7 @@ public class Drivetrain extends SubsystemBase implements DashboardUpdatable {
         ui_poseX = DashboardManager.addTabItem(this, "Starting Pose X", startingPose.getTranslation().getX());
         ui_poseY = DashboardManager.addTabItem(this, "Starting Pose Y", startingPose.getTranslation().getY());
         DashboardManager.getTab(this).add("StartPose", startPoseChooser);
-        DashboardManager.getTab(this).add("ResetPose", dashboardResetPoseCommand);
+//        DashboardManager.getTab(this).add("ResetPose", dashboardResetPoseCommand);
 
         startingPose = defaultStartPose.poseMeters;
         diffDrive = new SmartDiffDrive(leftMaster, rightMaster, Constants.DrivetrainValues.ClosedLoopDT, Constants.DrivetrainValues.MaxRpm);

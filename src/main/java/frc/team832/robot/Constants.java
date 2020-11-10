@@ -4,10 +4,14 @@ import edu.wpi.first.wpilibj.controller.SimpleMotorFeedforward;
 import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.kinematics.DifferentialDriveKinematics;
+import edu.wpi.first.wpilibj.system.LinearSystem;
+import edu.wpi.first.wpilibj.system.plant.DCMotor;
+import edu.wpi.first.wpilibj.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryConfig;
 import edu.wpi.first.wpilibj.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.trajectory.constraint.DifferentialDriveVoltageConstraint;
 import edu.wpi.first.wpilibj.util.Units;
+import edu.wpi.first.wpiutil.math.numbers.N1;
 import frc.team832.lib.drive.ClosedLoopDT;
 import frc.team832.lib.motors.GearReduction;
 import frc.team832.lib.motors.Gearbox;
@@ -91,10 +95,18 @@ public class Constants {
         public static final int HOOD_POTENTIOMETER_ANALOG_CHANNEL = 0;
 
         public static final float FlywheelReduction = 50f / 26f;
+        public static final float FlywheelRatio = 26f / 50f;
 
         private static final double FlywheelkS = 0.0437;
         private static final double FlywheelkV = 0.00217;
         private static final double FlywheelkA = 0.00103;
+
+        public static final double FlywheelMOI = 0.00179;
+
+        public static final LinearSystem<N1, N1, N1> m_flywheelPlant = LinearSystemId.createFlywheelSystem(
+                DCMotor.getNEO(2),
+                FlywheelMOI,
+                FlywheelRatio);
 
         public static final ClosedLoopConfig ShootingConfig = new ClosedLoopConfig(0.0005, 0, 0, 0.0);
         public static final ClosedLoopConfig IdleConfig = new ClosedLoopConfig(0.0, 0, 0, 0.0);
@@ -123,6 +135,8 @@ public class Constants {
         private static final double FeederkS = 0.0;
         private static final double FeederkV = 0.0;
         private static final double FeederkA = 0.0;
+
+        public static final double kFeederMoI = 0.000895;
 
         public static final SimpleMotorFeedforward FeederFF = new SimpleMotorFeedforward(FeederkS, FeederkV, FeederkA);
 
