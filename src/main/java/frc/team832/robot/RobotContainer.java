@@ -30,7 +30,7 @@ public class RobotContainer {
 
     // Subsystems
     public final Drivetrain drivetrain;
-    public final Vision vision = new Vision(drivetrain);
+    public final Vision vision;
     public final Intake intake = new Intake(pdp);
     public final Shooter shooter = new Shooter(pdp);
     public final Spindexer spindexer = new Spindexer(pdp);
@@ -58,7 +58,8 @@ public class RobotContainer {
             driverOI = new XboxDriverOI();
         }
 
-         drivetrain = new Drivetrain(pdp, driverOI);
+        drivetrain = new Drivetrain(pdp, driverOI);
+        vision = new Vision(drivetrain);
 
         if (OperatorInterface.getConnectedControllerCount() > 1) {
             configTestingCommands();
