@@ -23,7 +23,6 @@ import frc.team832.robot.Constants;
 import frc.team832.robot.RobotContainer;
 import frc.team832.robot.utilities.ArcadeDriveProfile;
 import frc.team832.robot.utilities.TankDriveProfile;
-//import frc.team832.robot.utilites.TankDriveProfile;
 
 public class Drivetrain extends SubsystemBase implements DashboardUpdatable {
 
@@ -44,7 +43,7 @@ public class Drivetrain extends SubsystemBase implements DashboardUpdatable {
     private double latestLeftWheelVolts, latestRightWheelVolts;
 
     private final TankDriveProfile tankProfile;
-    private final ArcadeDriveProfile arcadeProfile = new ArcadeDriveProfile();
+    private final ArcadeDriveProfile arcadeProfile;
 
     private final SmartMCAttachedPDPSlot leftMasterSlot, leftSlaveSlot, rightMasterSlot, rightSlaveSlot;
     private final NetworkTableEntry dashboard_rightVolts, dashboard_leftVolts, dashboard_pigeonIMU_pitch, dashboard_pigeonIMU_roll, dashboard_pigeonIMU_fusedHeading,
@@ -81,7 +80,8 @@ public class Drivetrain extends SubsystemBase implements DashboardUpdatable {
 
         imu = new PigeonIMU(0);
 
-        tankProfile = new TankDriveProfile(oi, false, false);
+        tankProfile = new TankDriveProfile(oi, false,false);
+        arcadeProfile = new ArcadeDriveProfile(oi);
 
         var defaultStartPose = Constants.FieldPosition.InitLine_CenteredOnPort;
 
