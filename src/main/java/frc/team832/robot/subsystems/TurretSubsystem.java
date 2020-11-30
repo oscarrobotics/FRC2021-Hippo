@@ -3,7 +3,6 @@ package frc.team832.robot.subsystems;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.team832.lib.driverstation.dashboard.DashboardManager;
-import frc.team832.lib.driverstation.dashboard.DashboardUpdatable;
 import frc.team832.lib.motorcontrol.NeutralMode;
 import frc.team832.lib.motorcontrol2.vendor.CANSparkMax;
 import frc.team832.lib.motors.Motor;
@@ -12,7 +11,7 @@ import frc.team832.lib.power.PDPSlot;
 import frc.team832.lib.sensors.REVThroughBorePWM;
 import frc.team832.robot.Constants;
 
-public class Turret extends SubsystemBase implements DashboardUpdatable {
+public class TurretSubsystem extends SubsystemBase {
 
     public final boolean initSuccessful;
 
@@ -22,8 +21,9 @@ public class Turret extends SubsystemBase implements DashboardUpdatable {
 
     private NetworkTableEntry dashboard_turretPos, dashboard_turretPow, dashboard_turretTarget;
 
-    public Turret(GrouchPDP pdp) {
-        DashboardManager.addTab(this, this);
+    public TurretSubsystem(GrouchPDP pdp) {
+        setName("Turret");
+        DashboardManager.addTab(this);
         motor = new CANSparkMax(Constants.TurretValues.TURRET_MOTOR_CAN_ID, Motor.kNEO550);
         encoder = new REVThroughBorePWM(Constants.TurretValues.TURRET_ENCODER_DIO_CHANNEL);
         pdpSlot = pdp.addDevice(Constants.TurretValues.TURRET_PDP_SLOT, motor);
@@ -40,16 +40,18 @@ public class Turret extends SubsystemBase implements DashboardUpdatable {
         initSuccessful = motor.getCANConnection();
     }
 
-
-    @Override
-    public String getDashboardTabName() {
-        return "Turret";
+    public void updateControlLoops() {
+        // run PID here
     }
 
     @Override
+    public void periodic() {
+        updateDashboardData();
+    }
+
     public void updateDashboardData() {
-        dashboard_turretPos.setDouble(getDegrees());
+//        dashboard_turretPos.setDouble(getDegrees());
         dashboard_turretPow.setDouble(motor.getOutputVoltage());
-        dashboard_turretTarget.setDouble(turretTargetDeg);
+//        dashboard_turretTarget.setDouble(turretTargetDeg);
     }
 }

@@ -1,32 +1,26 @@
 package frc.team832.robot.subsystems;
 
-import edu.wpi.first.math.WPIMathJNI;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.controller.LinearQuadraticRegulator;
-import edu.wpi.first.wpilibj.controller.PIDController;
 import edu.wpi.first.wpilibj.estimator.KalmanFilter;
-import edu.wpi.first.wpilibj.system.LinearSystem;
 import edu.wpi.first.wpilibj.system.LinearSystemLoop;
-import edu.wpi.first.wpilibj.system.plant.DCMotor;
-import edu.wpi.first.wpilibj.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpiutil.WPIUtilJNI;
 import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.VecBuilder;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 import frc.team832.lib.control.REVSmartServo_Continuous;
 import frc.team832.lib.driverstation.dashboard.DashboardManager;
-import frc.team832.lib.driverstation.dashboard.DashboardUpdatable;
 import frc.team832.lib.motorcontrol.NeutralMode;
 import frc.team832.lib.motorcontrol2.vendor.CANSparkMax;
 import frc.team832.lib.motors.Motor;
 import frc.team832.lib.power.GrouchPDP;
 import frc.team832.lib.power.impl.SmartMCAttachedPDPSlot;
+import frc.team832.lib.sensors.REVThroughBoreRelative;
 import frc.team832.lib.util.OscarMath;
 import frc.team832.robot.Constants;
 
-public class Shooter extends SubsystemBase implements DashboardUpdatable {
+public class ShooterSubsystem extends SubsystemBase {
     public final boolean initSuccessful;
 
     public boolean isVision = false;
@@ -37,13 +31,15 @@ public class Shooter extends SubsystemBase implements DashboardUpdatable {
     private final NetworkTableEntry dashboard_wheelRPM, dashboard_flywheelFF, dashboard_hoodPos, dashboard_hoodAngle, dashboard_wheelTargetRPM,
             dashboard_feedWheelRPM, dashboard_feedWheelTargetRPM, dashboard_feedFF, dashboard_potRotations;
 
+    private final double loopPeriod = 0.005;
+
     private final KalmanFilter<N1, N1, N1> m_observer = new KalmanFilter<>(
             Nat.N1(), Nat.N1(),
             Constants.ShooterValues.m_flywheelPlant,
             VecBuilder.fill(3.0), // How accurate we think our model is
             VecBuilder.fill(0.01), // How accurate we think our encoder
             // data is
-            0.020);
+            loopPeriod);
 
     private final LinearQuadraticRegulator<N1, N1, N1> m_controller
             = new LinearQuadraticRegulator<>(Constants.ShooterValues.m_flywheelPlant,
@@ -53,22 +49,24 @@ public class Shooter extends SubsystemBase implements DashboardUpdatable {
             VecBuilder.fill(12.0), // relms. Control effort (voltage) tolerance. Decrease this to more
             // heavily penalize control effort, or make the controller less aggressive. 12 is a good
             // starting point because that is the (approximate) maximum voltage of a battery.
-            0.020); // Nominal time between loops. 0.020 for TimedRobot, but can be lower if using notifiers.
+            loopPeriod); // Nominal time between loops. 0.020 for TimedRobot, but can be lower if using notifiers.
 
     private final LinearSystemLoop<N1, N1, N1> m_loop = new LinearSystemLoop<>(
             Constants.ShooterValues.m_flywheelPlant,
             m_controller,
             m_observer,
             12.0,
-            0.02);
+            loopPeriod);
+
+    private final REVThroughBoreRelative flywheelEncoder = new REVThroughBoreRelative(4, 5);
 
     private final AnalogInput potentiometer = new AnalogInput(Constants.ShooterValues.HOOD_POTENTIOMETER_ANALOG_CHANNEL);
 
     private final SmartMCAttachedPDPSlot primaryFlywheelSlot, secondaryFlywheelSlot, feederSlot;
 
 
-    public Shooter(GrouchPDP pdp) {
-        DashboardManager.addTab(this, this);
+    public ShooterSubsystem(GrouchPDP pdp) {
+        DashboardManager.addTab(this);
 
         primaryMotor = new CANSparkMax(Constants.ShooterValues.PRIMARY_CAN_ID, Motor.kNEO);
         secondaryMotor = new CANSparkMax(Constants.ShooterValues.SECONDARY_CAN_ID, Motor.kNEO);
@@ -110,12 +108,6 @@ public class Shooter extends SubsystemBase implements DashboardUpdatable {
         initSuccessful = primaryMotor.getCANConnection() && secondaryMotor.getCANConnection() && feederMotor.getCANConnection();
     }
 
-    @Override
-    public String getDashboardTabName() {
-        return "Shooter";
-    }
-
-    @Override
     public void updateDashboardData() {
         dashboard_wheelRPM.setDouble(primaryMotor.getSensorVelocity() * Constants.ShooterValues.FlywheelReduction);
         dashboard_feedWheelRPM.setDouble(feederMotor.getSensorVelocity());
@@ -127,14 +119,14 @@ public class Shooter extends SubsystemBase implements DashboardUpdatable {
 
     @Override
     public void periodic(){
-        runStateSpaceFlywheelControl(0);
+
     }
 
     private void runStateSpaceFlywheelControl(double radsPerSec){
         m_loop.setNextR(VecBuilder.fill(radsPerSec));
 
         // Correct our Kalman filter's state vector estimate with encoder data.
-        m_loop.correct(VecBuilder.fill(m_encoder.getRate()));
+        m_loop.correct(VecBuilder.fill(flywheelEncoder.getRate()));
 
         // Update our LQR to generate new voltage commands and use the voltages to predict the next
         // state with out Kalman filter.
@@ -145,6 +137,10 @@ public class Shooter extends SubsystemBase implements DashboardUpdatable {
         // duty cycle = voltage / battery voltage
         double nextVoltage = m_loop.getU(0);
         setFlywheelVoltage(nextVoltage);
+    }
+
+    public void updateControlLoops(){
+        runStateSpaceFlywheelControl(0);
     }
 
     private void setFlywheelVoltage(double volts){
@@ -162,6 +158,10 @@ public class Shooter extends SubsystemBase implements DashboardUpdatable {
 
     private double getHoodAngle() {
         return OscarMath.map(potentiometer.getVoltage(), Constants.ShooterValues.HoodBottom, Constants.ShooterValues.HoodTop, Constants.ShooterValues.HoodMinAngle, Constants.ShooterValues.HoodMaxAngle);
+    }
+
+    public double getFlywheelRPM_Encoder() {
+        return (flywheelEncoder.getRate() / 2048) * 60;
     }
 
 }
