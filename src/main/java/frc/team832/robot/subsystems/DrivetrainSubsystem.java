@@ -2,13 +2,19 @@ package frc.team832.robot.subsystems;
 
 import com.ctre.phoenix.sensors.PigeonIMU;
 import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.wpilibj.controller.LinearQuadraticRegulator;
+import edu.wpi.first.wpilibj.estimator.KalmanFilter;
 import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.wpilibj.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.system.LinearSystemLoop;
 import edu.wpi.first.wpilibj2.command.RunEndCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpiutil.math.Nat;
+import edu.wpi.first.wpiutil.math.VecBuilder;
+import edu.wpi.first.wpiutil.math.numbers.N1;
 import frc.team832.lib.drive.SmartDiffDrive;
 import frc.team832.lib.driverinput.oi.DriverOI;
 import frc.team832.lib.driverstation.dashboard.DashboardManager;
@@ -40,6 +46,33 @@ public class DrivetrainSubsystem extends SubsystemBase {
     private Pose2d robotPose = startingPose;
 
     private double latestLeftWheelVolts, latestRightWheelVolts;
+
+    private final double loopPeriod = 0.005;
+
+    private final KalmanFilter<N1, N1, N1> m_observer = new KalmanFilter<>(
+            Nat.N1(), Nat.N1(),
+            Constants.DrivetrainValues.kDrivetrainPlant,
+            VecBuilder.fill(3.0), // How accurate we think our model is
+            VecBuilder.fill(0.01), // How accurate we think our encoder data is
+            loopPeriod);
+
+    private final LinearQuadraticRegulator<N1, N1, N1> m_controller
+            = new LinearQuadraticRegulator<>(Constants.DrivetrainValues.kDrivetrainPlant,
+            VecBuilder.fill(8.0), // qelms. Velocity error tolerance, in radians per second. Decrease
+            // this to more heavily penalize state excursion, or make the controller behave more aggressively.
+            VecBuilder.fill(12.0), // relms. Control effort (voltage) tolerance. Decrease this to more
+            // heavily penalize control effort, or make the controller less aggressive. 12 is a good
+            // starting point because that is the (approximate) maximum voltage of a battery.
+            loopPeriod); // Nominal time between loops. 0.020 for TimedRobot, but can be lower if using notifiers.
+
+    private final LinearSystemLoop<N1, N1, N1> m_loop = new LinearSystemLoop<>(
+            Constants.DrivetrainValues.kDrivetrainPlant,
+            m_controller,
+            m_observer,
+            12.0,
+            loopPeriod);
+
+
 
     private final TankDriveProfile tankProfile;
     private final ArcadeDriveProfile arcadeProfile;

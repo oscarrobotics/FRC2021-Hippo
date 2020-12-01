@@ -27,7 +27,7 @@ public class IntakeSubsystem extends SubsystemBase {
         intakeMotor.set(power);
     }
 
-    public void setPosition(boolean extended) {
-        intakePistons.set(extended);
+    public void setPosition(boolean state) {
+        intakePistons.set(state);
     }
 }

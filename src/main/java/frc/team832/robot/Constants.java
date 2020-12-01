@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.trajectory.constraint.DifferentialDriveVoltageConstraint;
 import edu.wpi.first.wpilibj.util.Units;
 import edu.wpi.first.wpiutil.math.numbers.N1;
+import edu.wpi.first.wpiutil.math.numbers.N2;
 import frc.team832.lib.drive.ClosedLoopDT;
 import frc.team832.lib.motors.GearReduction;
 import frc.team832.lib.motors.Gearbox;
@@ -20,6 +21,8 @@ import frc.team832.lib.motors.WheeledPowerTrain;
 import frc.team832.lib.power.PDPPortNumber;
 import frc.team832.lib.util.ClosedLoopConfig;
 import frc.team832.lib.util.OscarMath;
+
+import javax.sound.midi.Track;
 
 @SuppressWarnings("unused")
 public class Constants {
@@ -39,14 +42,18 @@ public class Constants {
         public static final double StickRotateOnCenterMultiplier = 0.6;
         public static final double StickRotateMultiplier = 0.8;
 
-        public static final double DriveWheelDiameter = 6 * 0.0254;
-        public static final float DriveGearReduction = 1f / (8f / 84f);
-
         public static final int MaxRpm = (int) Motor.kFalcon500.freeSpeed;
+
+        public static final double DriveWheelDiameter = 6 * 0.0254;
+        public static final float DriveGearReduction = 84f/8f;
+
+        public static final double RobotMass = 44.5;
+        public static final double RobotMOI = 1;//needs real numbers
+        public static final double TrackWidthMeters = 0.6763419203747071;
 
         private static final Gearbox DriveGearbox = new Gearbox(DriveGearReduction);
         public static final WheeledPowerTrain DrivePowerTrain = new WheeledPowerTrain(DriveGearbox, Motor.kFalcon500, 2, DriveWheelDiameter);
-        public static DifferentialDriveKinematics DriveKinematics = new DifferentialDriveKinematics(0.6763419203747071);
+        public static DifferentialDriveKinematics DriveKinematics = new DifferentialDriveKinematics(TrackWidthMeters);
 
         public static final SimpleMotorFeedforward CombinedFF = new SimpleMotorFeedforward(0.115, 2.33, 0.165);
         public static final SimpleMotorFeedforward LeftFF = new SimpleMotorFeedforward(0.109, 2.34, 0.165);
@@ -78,6 +85,26 @@ public class Constants {
                 new TrajectoryConfig(Velocity, Acceleration)
                         .setKinematics(DriveKinematics)
                         .addConstraint(RightAutoVoltageConstraint);
+
+
+        public static final int kEncoderCPR = 1024;
+        public static final double kEncoderDistancePerPulse = (DriveWheelDiameter * Math.PI) / (double) kEncoderCPR;
+
+        public static final DCMotor kDriveGearbox = DCMotor.getFalcon500(2);
+        public static final boolean kGyroReversed = true;
+        public static final double kPDriveVel = 0.1;
+
+        public static final double ksVolts = 0.115;
+        public static final double kvVoltSecondsPerMeter = 2.33;
+        public static final double kaVoltSecondsSquaredPerMeter = 0.165;
+
+        public static final double kvVoltSecondsPerRadian = 2.0;
+        public static final double kaVoltSecondsSquaredPerRadian = .1;
+
+        public static final LinearSystem<N2, N2, N2> kDrivetrainPlant =
+                LinearSystemId.createDrivetrainVelocitySystem(kDriveGearbox, RobotMass, DriveWheelDiameter / 2.0,
+                        TrackWidthMeters / 2.0, RobotMOI, DriveGearReduction);
+
     }
 
     @SuppressWarnings("unused")
