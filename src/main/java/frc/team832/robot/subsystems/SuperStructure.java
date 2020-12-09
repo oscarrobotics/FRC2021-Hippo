@@ -74,6 +74,20 @@ public class SuperStructure extends SubsystemBase {
 
     }
 
+    public void intake(double power, double spinRPM, SpindexerSubsystem.SpinnerDirection direction) {
+        intake.intake(power);
+        spindexer.setSpinRPM(spinRPM, direction);
+        intake.extendIntake();
+    }
+
+    private class ShootCommand extends CommandBase {
+
+    }
+
+    private class TargetingCommand extends CommandBase {
+
+    }
+
     public void RunIdleCommand() {
         idleCommand.schedule();
     }
@@ -82,5 +96,22 @@ public class SuperStructure extends SubsystemBase {
         intakeCommand.schedule();
     }
 
+    public void idleAll() {
+        idleShooter();
+        idleIntake();
+        idleSpindexer();
+    }
 
+    public void idleIntake() {
+        intake.stop();
+        intake.retractIntake();
+    }
+
+    public void idleShooter() {
+
+    }
+
+    public void idleSpindexer() {
+
+    }
 }

@@ -15,6 +15,9 @@ public class TurretSubsystem extends SubsystemBase {
 
     public final boolean initSuccessful;
 
+    private double turretTargetDeg;
+    private boolean isVision;
+
     private final CANSparkMax motor;
     private final REVThroughBorePWM encoder;
     private final PDPSlot pdpSlot;
@@ -42,6 +45,15 @@ public class TurretSubsystem extends SubsystemBase {
 
     public void updateControlLoops() {
         // run PID here
+    }
+
+    public void setTurretTargetDegrees(double pos, boolean visionMode) {
+        isVision = visionMode;
+        turretTargetDeg = pos;
+    }
+
+    public void setIntake() {
+        setTurretTargetDegrees(Constants.TurretValues.IntakeOrientationDegrees, false);
     }
 
     @Override

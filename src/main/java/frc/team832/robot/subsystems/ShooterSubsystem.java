@@ -24,6 +24,7 @@ public class ShooterSubsystem extends SubsystemBase {
     public final boolean initSuccessful;
 
     public boolean isVision = false;
+    private double feedTarget;
 
     private final CANSparkMax primaryMotor, secondaryMotor, feederMotor;
     private final REVSmartServo_Continuous hoodServo;
@@ -135,6 +136,10 @@ public class ShooterSubsystem extends SubsystemBase {
         // duty cycle = voltage / battery voltage
         double nextVoltage = m_loop.getU(0);
         setFlywheelVoltage(nextVoltage);
+    }
+
+    public void setFeedRPM(double rpm) {
+        feedTarget = rpm;
     }
 
     public void updateControlLoops(){
