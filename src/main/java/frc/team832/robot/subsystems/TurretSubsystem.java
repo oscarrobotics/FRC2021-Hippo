@@ -9,7 +9,9 @@ import frc.team832.lib.motors.Motor;
 import frc.team832.lib.power.GrouchPDP;
 import frc.team832.lib.power.PDPSlot;
 import frc.team832.lib.sensors.REVThroughBorePWM;
+import frc.team832.lib.util.OscarMath;
 import frc.team832.robot.Constants;
+import frc.team832.robot.utilities.state.ShooterCalculations;
 
 public class TurretSubsystem extends SubsystemBase {
 
@@ -17,6 +19,9 @@ public class TurretSubsystem extends SubsystemBase {
 
     private double turretTargetDeg;
     private boolean isVision;
+    private double turretFF = 0;
+
+
 
     private final CANSparkMax motor;
     private final REVThroughBorePWM encoder;
@@ -52,8 +57,27 @@ public class TurretSubsystem extends SubsystemBase {
         turretTargetDeg = pos;
     }
 
+    public void trackTarget(double spindexerRPM) {
+        updateFF(spindexerRPM);
+        setTurretTargetDegrees(ShooterCalculations.visionYaw + ((spindexerRPM / 30.0) * Math.signum(spindexerRPM)) + getDegrees(), true);
+    }
+
+    double getRotations() {
+        return OscarMath.round(encoder.get(), 3);
+    }
+
+    double getDegrees() {
+        return Constants.TurretValues.convertRotationsToDegrees(getRotations());
+    }
+
+    public void setForward(boolean isVision) { setTurretTargetDegrees(Constants.TurretValues.TurretCenterVisionPosition, isVision); }
+
     public void setIntake() {
         setTurretTargetDegrees(Constants.TurretValues.IntakeOrientationDegrees, false);
+    }
+
+    private void updateFF(double spindexerRPM) {
+        turretFF =  spindexerRPM * Constants.TurretValues.FFMultiplier;
     }
 
     @Override

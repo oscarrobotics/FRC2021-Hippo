@@ -6,7 +6,7 @@ import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonUtils;
 
 public class ShooterCalculations {
-    public static double flywheelRPM, exitAngle, visionYaw;
+    public static double flywheelRPM, exitAngle, visionYaw, distance;
     public static double areaToMeters = 0.0001;
 
     private static final double CameraAngle = 56.53;
@@ -39,5 +39,9 @@ public class ShooterCalculations {
         dashboard_flywheelRPM.setDouble(flywheelRPM);
         dashboard_turretYaw.setDouble(visionYaw);
         dashboard_exitAngle.setDouble(exitAngle);
+    }
+
+    public static double getSpindexerRpm(){
+        return Math.pow(0.5, (0.4 * distance) - 5) + 90;
     }
 }

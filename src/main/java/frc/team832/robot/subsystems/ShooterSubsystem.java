@@ -19,15 +19,18 @@ import frc.team832.lib.power.impl.SmartMCAttachedPDPSlot;
 import frc.team832.lib.sensors.REVThroughBoreRelative;
 import frc.team832.lib.util.OscarMath;
 import frc.team832.robot.Constants;
+import frc.team832.robot.utilities.state.ShooterCalculations;
 
 public class ShooterSubsystem extends SubsystemBase {
     public final boolean initSuccessful;
 
     public boolean isVision = false;
-    private double feedTarget;
+    private double feedTarget, hoodTarget, flywheelTarget;
 
     private final CANSparkMax primaryMotor, secondaryMotor, feederMotor;
     private final REVSmartServo_Continuous hoodServo;
+
+
 
     private final NetworkTableEntry dashboard_wheelRPM, dashboard_flywheelFF, dashboard_hoodPos, dashboard_hoodAngle, dashboard_wheelTargetRPM,
             dashboard_feedWheelRPM, dashboard_feedWheelTargetRPM, dashboard_feedFF, dashboard_potRotations;
@@ -140,6 +143,28 @@ public class ShooterSubsystem extends SubsystemBase {
 
     public void setFeedRPM(double rpm) {
         feedTarget = rpm;
+    }
+
+    public void setFlywheelRPM(double wheelTargetRPM) {
+        flywheelTarget = wheelTargetRPM;
+    }
+
+    public void setHoodAngle(double degrees) {
+        setHood(calculateVoltageFromAngle(degrees));
+    }
+
+
+    private double calculateVoltageFromAngle(double degrees) {
+        return OscarMath.clipMap(degrees, Constants.ShooterValues.HoodMinAngle, Constants.ShooterValues.HoodMaxAngle, Constants.ShooterValues.HoodBottom, Constants.ShooterValues.HoodTop);
+    }
+
+    public void setHood(double potVoltage) {
+        hoodTarget = potVoltage;
+    }
+
+    public void trackTarget() {
+        setFlywheelRPM(ShooterCalculations.flywheelRPM);//ShooterCalculations.flywheelRPM
+        setHoodAngle(ShooterCalculations.exitAngle);
     }
 
     public void updateControlLoops(){

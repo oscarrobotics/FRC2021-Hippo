@@ -1,9 +1,9 @@
 package frc.team832.robot.subsystems;
 
-import edu.wpi.first.wpilibj2.command.CommandBase;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.*;
 import frc.team832.lib.driverstation.dashboard.DashboardManager;
+import frc.team832.robot.Constants;
+import frc.team832.robot.utilities.state.ShooterCalculations;
 
 public class SuperStructure extends SubsystemBase {
 
@@ -15,7 +15,7 @@ public class SuperStructure extends SubsystemBase {
 
     public final IdleCommand idleCommand;
     public final TargetingCommand targetingCommand;
-    public final ShootCommand shootCommand;
+    public final ShootCommandGroup shootCommand;
     public final IntakeCommand intakeCommand;
 
     private double spindexerIntakeRpm = 15;
@@ -29,12 +29,17 @@ public class SuperStructure extends SubsystemBase {
 
         idleCommand = new IdleCommand();
         targetingCommand = new TargetingCommand();
-        shootCommand = new ShootCommand();
+        shootCommand = new ShootCommandGroup();
         intakeCommand = new IntakeCommand();
 
         DashboardManager.addTab(this);
     }
 
+
+
+
+
+    //COMMANDS:
     private class IdleCommand extends InstantCommand {
         IdleCommand() {
             addRequirements(shooter, intake, spindexer, turret, SuperStructure.this);
@@ -74,19 +79,44 @@ public class SuperStructure extends SubsystemBase {
 
     }
 
-    public void intake(double power, double spinRPM, SpindexerSubsystem.SpinnerDirection direction) {
-        intake.intake(power);
-        spindexer.setSpinRPM(spinRPM, direction);
-        intake.extendIntake();
+    public class ShootCommandGroup extends ParallelCommandGroup {
+        public ShootCommandGroup() {
+            addRequirements(shooter, intake, spindexer, turret, SuperStructure.this);
+            addCommands(
+                    // tracking target
+                    new FunctionalCommand(() -> turret.setForward(true), SuperStructure.this::trackTarget, (interrupted) -> {}, () -> false),
+                    // wait then shoot
+                    new SequentialCommandGroup(
+                            new WaitCommand(0.5),
+                            new FunctionalCommand(
+                                    () -> spindexer.setSpinRPM(ShooterCalculations.getSpindexerRpm(), SpindexerSubsystem.SpinnerDirection.Clockwise),
+                                    SuperStructure.this::shootAtTarget,
+                                    (interrupted) -> { idleSpindexer(); idleShooter(); },
+                                    () -> false
+                            )
+                    )
+            );
+        }
     }
 
-    private class ShootCommand extends CommandBase {
+    public class TargetingCommand extends CommandBase {
+        TargetingCommand() {
+            addRequirements(shooter, intake, spindexer, turret, SuperStructure.this);
+        }
 
+        @Override
+        public void initialize() {
+            idleSpindexer();
+            turret.setForward(true);
+        }
+
+        @Override
+        public void execute() {
+            trackTarget();
+//			spindexer.setTargetRotation(getNearestSafeRotationRelativeToFeeder());might be unnecessary
+        }
     }
 
-    private class TargetingCommand extends CommandBase {
-
-    }
 
     public void RunIdleCommand() {
         idleCommand.schedule();
@@ -94,6 +124,32 @@ public class SuperStructure extends SubsystemBase {
 
     public void RunIntakeCommand() {
         intakeCommand.schedule();
+    }
+
+    public void shootAtTarget() {
+        if (vision.hasTarget()) {
+            turret.trackTarget(spindexer.getVelocity());
+            shooter.trackTarget();
+            shooter.setFeedRPM(Constants.ShooterValues.FeedRpm);
+        } else {
+            turret.setTurretTargetDegrees(0.0, true);
+        }
+    }
+
+    //HELPER METHODS
+    public void intake(double power, double spinRPM, SpindexerSubsystem.SpinnerDirection direction) {
+        intake.intake(power);
+        spindexer.setSpinRPM(spinRPM, direction);
+        intake.extendIntake();
+    }
+
+    public void trackTarget() {
+        if (vision.hasTarget()) {
+            turret.trackTarget(spindexer.getVelocity());
+            shooter.trackTarget();
+        } else {
+            turret.setTurretTargetDegrees(0.0, true);
+        }
     }
 
     public void idleAll() {
@@ -112,6 +168,6 @@ public class SuperStructure extends SubsystemBase {
     }
 
     public void idleSpindexer() {
-
+        spindexer.idle();
     }
 }
