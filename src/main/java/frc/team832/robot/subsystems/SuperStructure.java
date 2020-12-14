@@ -136,6 +136,10 @@ public class SuperStructure extends SubsystemBase {
         }
     }
 
+
+
+
+
     //HELPER METHODS
     public void intake(double power, double spinRPM, SpindexerSubsystem.SpinnerDirection direction) {
         intake.intake(power);
