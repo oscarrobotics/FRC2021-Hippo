@@ -1,7 +1,11 @@
 package frc.team832.robot.subsystems;
 
 import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.wpilibj.SlewRateLimiter;
 import edu.wpi.first.wpilibj.Solenoid;
+import edu.wpi.first.wpilibj.controller.ProfiledPIDController;
+import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.CommandGroupBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.team832.lib.driverstation.dashboard.DashboardManager;
 import frc.team832.lib.driverstation.dashboard.DashboardWidget;
@@ -23,6 +27,8 @@ public class ClimbSubsystem extends SubsystemBase {
     private double climbPower = 0;
     private double extendTarget = Constants.ClimberValues.Retract;
 
+    private ProfiledPIDController extendPID = new ProfiledPIDController(Constants.ClimberValues.ExtendkP, Constants.ClimberValues.ExtendkI, Constants.ClimberValues.ExtendkD, Constants.ClimberValues.ExtendConstraints);
+    private SlewRateLimiter climbRamp = new SlewRateLimiter(Constants.ClimberValues.ClimbRateLimit);
 
     private final NetworkTableEntry dashboard_isSafe, dashboard_deployTarget, dashboard_deployPosition;
 
@@ -62,7 +68,8 @@ public class ClimbSubsystem extends SubsystemBase {
     }
 
     public void periodic() {
-        runClimbRamp();
+        runExtendPID();
+        runClimbPID();
         dashboard_isSafe.setBoolean(isWinchSafe());
     }
 
@@ -99,7 +106,7 @@ public class ClimbSubsystem extends SubsystemBase {
         deployMotor.set(extendPID.calculate(deployMotor.getSensorPosition(), extendTarget));
     }
 
-    private void runClimbRamp() {
+    private void runClimbPID() {
         winchMotor.set(climbRamp.calculate(climbPower));
     }
 

@@ -52,10 +52,6 @@ public class RobotContainer {
         }
     }
 
-    private void configureBrandonLayout() {
-
-    }
-
     private void configTestingCommands() {
 
     }

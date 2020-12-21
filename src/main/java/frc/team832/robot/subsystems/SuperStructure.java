@@ -117,7 +117,6 @@ public class SuperStructure extends SubsystemBase {
         }
     }
 
-
     public void RunIdleCommand() {
         idleCommand.schedule();
     }
@@ -135,10 +134,6 @@ public class SuperStructure extends SubsystemBase {
             turret.setTurretTargetDegrees(0.0, true);
         }
     }
-
-
-
-
 
     //HELPER METHODS
     public void intake(double power, double spinRPM, SpindexerSubsystem.SpinnerDirection direction) {

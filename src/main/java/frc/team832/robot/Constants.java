@@ -14,7 +14,6 @@ import edu.wpi.first.wpilibj.util.Units;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 import edu.wpi.first.wpiutil.math.numbers.N2;
 import frc.team832.lib.drive.ClosedLoopDT;
-import frc.team832.lib.motors.GearReduction;
 import frc.team832.lib.motors.Gearbox;
 import frc.team832.lib.motors.Motor;
 import frc.team832.lib.motors.WheeledPowerTrain;
@@ -142,7 +141,7 @@ public class Constants {
         public static final SimpleMotorFeedforward FlywheelFF = new SimpleMotorFeedforward(FlywheelkS, FlywheelkV, FlywheelkA);
 
         //Hood
-        static final GearReduction HoodReduction = new GearReduction(34, 340);
+        public static final double HoodReduction = 34.0 / 340.0;
 
         public static final double HoodkP = 8.0;
 
@@ -258,7 +257,10 @@ public class Constants {
         //velocity might be acceleration and acceleration might be jerk because PID is running on velocity and not position
 
         public static final double ExtendkP = 0.08;
+        public static final double ExtendkI = 0.00;
+        public static final double ExtendkD = 0.00;
         public static final double ClimbkP = 0.01;
+        public static final double ClimbRateLimit = 1.00;
 
         public static double ClimbVelocity = 10;
     }
