@@ -4,9 +4,7 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.SlewRateLimiter;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.controller.ProfiledPIDController;
-import edu.wpi.first.wpilibj2.command.CommandBase;
-import edu.wpi.first.wpilibj2.command.CommandGroupBase;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.*;
 import frc.team832.lib.driverstation.dashboard.DashboardManager;
 import frc.team832.lib.driverstation.dashboard.DashboardWidget;
 import frc.team832.lib.motorcontrol.NeutralMode;
@@ -16,6 +14,7 @@ import frc.team832.lib.power.GrouchPDP;
 import frc.team832.lib.power.impl.SmartMCAttachedPDPSlot;
 import frc.team832.lib.util.OscarMath;
 import frc.team832.robot.Constants;
+import frc.team832.robot.utilities.state.ShooterCalculations;
 
 public class ClimbSubsystem extends SubsystemBase {
     public final boolean initSuccessful;
@@ -122,5 +121,30 @@ public class ClimbSubsystem extends SubsystemBase {
 
     public void zeroDeploy() {
         deployMotor.rezeroSensor();
+    }
+
+
+
+    // Commands:
+    public class StartClimbGroup extends SequentialCommandGroup {
+        public StartClimbGroup(boolean climbUp) {
+            addRequirements(ClimbSubsystem.this);
+            addCommands(
+                    new InstantCommand(ClimbSubsystem.this::unlockClimb, ClimbSubsystem.this),
+                    new WaitCommand(0.2),
+                    new InstantCommand(climbUp ? ClimbSubsystem.this::windWinch : ClimbSubsystem.this::unwindWinch, ClimbSubsystem.this)
+            );
+        }
+    }
+
+    public class StopClimbGroup extends SequentialCommandGroup {
+        public StopClimbGroup(){
+            addRequirements(ClimbSubsystem.this);
+            addCommands(
+                    new InstantCommand(ClimbSubsystem.this::stopClimb),
+                    new WaitCommand(0.2),
+                    new InstantCommand(ClimbSubsystem.this::lockClimb)
+            );
+        }
     }
 }
