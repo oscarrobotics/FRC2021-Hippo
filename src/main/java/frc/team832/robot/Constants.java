@@ -175,6 +175,11 @@ public class Constants {
 
         public static final PDPPortNumber TURRET_PDP_SLOT = PDPPortNumber.Port4;
 
+        public static final double kTurretMOI = 0;
+        public static final double turretGearing = 0;
+
+        public static final double ControlLoopPeriod = 0;
+
         public static final double PracticeTurretLeftPosition = -83;
         public static final double PracticeTurretRightPosition = 83;
 

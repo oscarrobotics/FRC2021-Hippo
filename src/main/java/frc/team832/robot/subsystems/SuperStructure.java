@@ -35,10 +35,6 @@ public class SuperStructure extends SubsystemBase {
         DashboardManager.addTab(this);
     }
 
-
-
-
-
     //COMMANDS:
     private class IdleCommand extends InstantCommand {
         IdleCommand() {
