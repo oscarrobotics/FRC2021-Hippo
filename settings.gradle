@@ -4,7 +4,7 @@ pluginManagement {
     repositories {
         mavenLocal()
         gradlePluginPortal()
-        String frcYear = '2020'
+        String frcYear = '2021'
         File frcHome
         if (OperatingSystem.current().isWindows()) {
             String publicFolder = System.getenv('PUBLIC')
@@ -26,3 +26,7 @@ pluginManagement {
 
 rootProject.name='FRC2021-Hippo'
 include 'GrouchLib'
+rootProject.children[0].buildFileName = "GrouchLib.gradle"
+if (!rootProject.children[0].buildFile.isFile()) {
+    rootProject.children[0].buildFileName = "build.gradle"
+}
