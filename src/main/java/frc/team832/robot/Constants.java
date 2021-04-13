@@ -52,22 +52,12 @@ public class Constants {
 
         private static final Gearbox DriveGearbox = new Gearbox(DriveGearReduction);
         public static final WheeledPowerTrain DrivePowerTrain = new WheeledPowerTrain(DriveGearbox, Motor.kFalcon500, 2, DriveWheelDiameter);
+
         public static DifferentialDriveKinematics DriveKinematics = new DifferentialDriveKinematics(TrackWidthMeters);
 
         public static final SimpleMotorFeedforward CombinedFF = new SimpleMotorFeedforward(0.115, 2.33, 0.165);
         public static final SimpleMotorFeedforward LeftFF = new SimpleMotorFeedforward(0.109, 2.34, 0.165);
         public static final SimpleMotorFeedforward RightFF = new SimpleMotorFeedforward(0.121, 2.31, 0.165);
-
-        public static final ClosedLoopConfig LeftConfig = new ClosedLoopConfig(0.01, 0, 0.001, 0);
-        public static final ClosedLoopConfig RightConfig = new ClosedLoopConfig(0.01, 0, 0.001, 0);
-
-        public static final ClosedLoopDT ClosedLoopDT = new ClosedLoopDT(LeftFF, RightFF, LeftConfig, RightConfig, DrivePowerTrain);
-
-        public static final double LeftkP = 0.0001;
-        public static final double LeftkD = 0.0;
-
-        public static final double RightkP = 0.0001;
-        public static final double RightkD = 0.0;
 
         public static final DifferentialDriveVoltageConstraint LeftAutoVoltageConstraint =
                 new DifferentialDriveVoltageConstraint(LeftFF, DriveKinematics, 10);
@@ -76,15 +66,17 @@ public class Constants {
 
         private static final double Velocity = 1;
         private static final double Acceleration = 1;
-        public static final TrajectoryConfig LeftTrajectoryConfig =
-                new TrajectoryConfig(Velocity, Acceleration)
-                        .setKinematics(DriveKinematics)
-                        .addConstraint(LeftAutoVoltageConstraint);
-        public static final TrajectoryConfig RightTrajectoryConfig =
-                new TrajectoryConfig(Velocity, Acceleration)
-                        .setKinematics(DriveKinematics)
-                        .addConstraint(RightAutoVoltageConstraint);
 
+        public static final TrajectoryConfig LeftTrajectoryConfig =
+                new TrajectoryConfig(Velocity, Acceleration).setKinematics(DriveKinematics).addConstraint(LeftAutoVoltageConstraint);
+        public static final TrajectoryConfig RightTrajectoryConfig =
+                new TrajectoryConfig(Velocity, Acceleration).setKinematics(DriveKinematics).addConstraint(RightAutoVoltageConstraint);
+
+
+        public static final ClosedLoopConfig LeftConfig = new ClosedLoopConfig(0.01, 0, 0.001, 0);
+        public static final ClosedLoopConfig RightConfig = new ClosedLoopConfig(0.01, 0, 0.001, 0);
+
+        public static final ClosedLoopDT ClosedLoopDT = new ClosedLoopDT(LeftFF, RightFF, LeftConfig, RightConfig, DrivePowerTrain);
 
         public static final int kEncoderCPR = 1024;
         public static final double kEncoderDistancePerPulse = (DriveWheelDiameter * Math.PI) / (double) kEncoderCPR;
@@ -236,11 +228,12 @@ public class Constants {
         public static final WheeledPowerTrain SpinPowertrain = new WheeledPowerTrain(SpinGearbox, Motor.kNEO, 1, Units.inchesToMeters(20));
 
         public static final double SpinkP = 0.01;
+        public static final double SpinkI = 0.0;
+        public static final double SpinkD = 0.0;
 
-        public static final double PositionkP = 2.0;
+        public static TrapezoidProfile.Constraints VelocityConstraints  = new TrapezoidProfile.Constraints(SpinPowertrain.calculateMotorRpmFromWheelRpm(10), SpinPowertrain.calculateMotorRpmFromWheelRpm(30));
 
-        public static TrapezoidProfile.Constraints Constraints = new TrapezoidProfile.Constraints(SpinPowertrain.calculateMotorRpmFromWheelRpm(90), SpinPowertrain.calculateMotorRpmFromWheelRpm(180));
-
+        public static final double FFMultiplier = 0.05;
     }
 
     @SuppressWarnings("unused")

@@ -161,6 +161,8 @@ public class TurretSubsystem extends SubsystemBase {
         return Constants.TurretValues.convertRotationsToDegrees(getRotations());
     }
 
+    public void setForward() { setTurretTargetDegrees(Constants.TurretValues.TurretCenterVisionPosition, false); }
+
     public void setForward(boolean isVision) { setTurretTargetDegrees(Constants.TurretValues.TurretCenterVisionPosition, isVision); }
 
     public void setIntake() {

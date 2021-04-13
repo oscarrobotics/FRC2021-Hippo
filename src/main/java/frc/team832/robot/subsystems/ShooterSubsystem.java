@@ -141,6 +141,12 @@ public class ShooterSubsystem extends SubsystemBase {
         setFlywheelVoltage(nextVoltage);
     }
 
+    public void idleAll() {
+        setHoodAngle(getHoodAngle());
+        setFeedRPM(0);
+        setFlywheelRPM(0);
+    }
+
     public void setFeedRPM(double rpm) {
         feedTarget = rpm;
     }
@@ -153,9 +159,8 @@ public class ShooterSubsystem extends SubsystemBase {
         setHood(calculateVoltageFromAngle(degrees));
     }
 
-
-    private double calculateVoltageFromAngle(double degrees) {
-        return OscarMath.clipMap(degrees, Constants.ShooterValues.HoodMinAngle, Constants.ShooterValues.HoodMaxAngle, Constants.ShooterValues.HoodBottom, Constants.ShooterValues.HoodTop);
+    public void setHoodToVisionDistance() {
+        setHoodAngle(ShooterCalculations.exitAngle);
     }
 
     public void setHood(double potVoltage) {
@@ -168,7 +173,7 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public void updateControlLoops(){
-        runStateSpaceFlywheelControl(0);
+        runStateSpaceFlywheelControl(flywheelTarget * 2 * Math.PI);
     }
 
     private void setFlywheelVoltage(double volts){
@@ -180,12 +185,20 @@ public class ShooterSubsystem extends SubsystemBase {
         secondaryMotor.setNeutralMode(mode);
     }
 
+    public boolean atFeedRpm() {
+        return OscarMath.withinEpsilon(500, feedTarget, feederMotor.getSensorVelocity());
+    }
+
     public void setFeederNeutralMode(NeutralMode mode) {
         feederMotor.setNeutralMode(mode);
     }
 
     private double getHoodAngle() {
         return OscarMath.map(potentiometer.getVoltage(), Constants.ShooterValues.HoodBottom, Constants.ShooterValues.HoodTop, Constants.ShooterValues.HoodMinAngle, Constants.ShooterValues.HoodMaxAngle);
+    }
+
+    private double calculateVoltageFromAngle(double degrees) {
+        return OscarMath.clipMap(degrees, Constants.ShooterValues.HoodMinAngle, Constants.ShooterValues.HoodMaxAngle, Constants.ShooterValues.HoodBottom, Constants.ShooterValues.HoodTop);
     }
 
     public double getFlywheelRPM_Encoder() {

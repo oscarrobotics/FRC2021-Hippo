@@ -19,9 +19,13 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     private int vibrateCount;
     private double lastSpinSpeed = 0;
-    private double spindexerTargetVelocity = 0, spindexerTargetPosition = 0;
+    private double spindexerTargetRPM = 0, spindexerTargetPosition = 0;
 
-    private SpinMode spinMode;
+    private SpinnerDirection spinDirection = SpinnerDirection.Clockwise;
+
+    ProfiledPIDController PID = new ProfiledPIDController(Constants.SpindexerValues.SpinkP, Constants.SpindexerValues.SpinkI, Constants.SpindexerValues.SpinkD, Constants.SpindexerValues.VelocityConstraints);
+
+    public NetworkTableEntry dashboard_RPM, dashboard_targetRPM, dashboard_PIDEffort, dashboard_ff, dashboard_isStall, dashboard_direction;
 
     private final CANSparkMax spinMotor;
 
@@ -30,10 +34,19 @@ public class SpindexerSubsystem extends SubsystemBase {
 
         spinMotor = new CANSparkMax(Constants.SpindexerValues.SPIN_MOTOR_CAN_ID, Motor.kNEO);
         spinMotor.wipeSettings();
-        setCurrentLimit(10); //this might change
+        setCurrentLimit(20); //this might change
         spinMotor.setInverted(false); //these might change
         spinMotor.setSensorPhase(true);
         spinMotor.setNeutralMode(NeutralMode.kBrake);
+
+        DashboardManager.addTab(this);
+
+        dashboard_RPM = DashboardManager.addTabItem(this, "RPM", 0.0);
+        dashboard_targetRPM = DashboardManager.addTabItem(this, "Target RPM", 0.0);
+        dashboard_PIDEffort = DashboardManager.addTabItem(this, "PID Effort", 0.0);
+        dashboard_ff = DashboardManager.addTabItem(this, "FF", 0.0);
+        dashboard_isStall = DashboardManager.addTabItem(this, "Stalling", false);
+        dashboard_direction = DashboardManager.addTabItem(this, "Direction", SpinnerDirection.Clockwise.toString());
 
         zeroSpindexer();
 
@@ -42,8 +55,22 @@ public class SpindexerSubsystem extends SubsystemBase {
         initSuccessful = spinMotor.getCANConnection();
     }
 
-    public void updateControlLoops() {
+    @Override
+    public void periodic() {
+        runSpindexerPID();
+    }
 
+    private void runSpindexerPID() {
+        double power;
+        power = PID.calculate(getRPM(), spindexerTargetRPM);
+        double ff = calculateFF();
+        dashboard_ff.setDouble(ff);
+        spinMotor.set(spindexerTargetRPM == 0 ? 0 : power + ff);
+        dashboard_PIDEffort.setDouble(power);
+    }
+
+    private double calculateFF() {
+        return (Constants.SpindexerValues.FFMultiplier * Math.signum(spindexerTargetRPM)) + (((1 / Motor.kNEO.kv * spindexerTargetRPM) / Constants.SpindexerValues.SpinReduction) / spinMotor.getInputVoltage());
     }
 
     public void setCurrentLimit(int currentLimit) {
@@ -51,18 +78,11 @@ public class SpindexerSubsystem extends SubsystemBase {
     }
 
     public void setSpinRPM(double rpm, SpinnerDirection spinDirection) {
-        setSpinRPM(rpm, spinDirection, false, 0, 0);
-    }
-
-    public void setSpinRPM(double rpm, SpinnerDirection spinDirection, boolean waitForShooter, double shooterCurrentRPM, double shooterTargetRPM) {
-        if (!waitForShooter || Math.abs(shooterCurrentRPM - shooterTargetRPM) < 100) {
-            lastSpinSpeed = rpm;
-            if (spinDirection == SpinnerDirection.Clockwise) {
-                setTargetVelocity(rpm);
-            }
-            else {
-                setTargetVelocity(-rpm);
-            }
+        if (spinDirection == SpinnerDirection.Clockwise) {
+            setTargetVelocity(rpm);
+        }
+        else {
+            setTargetVelocity(-rpm);
         }
     }
 
@@ -72,19 +92,26 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     public double getVelocity() { return spinMotor.getSensorVelocity() * Constants.SpindexerValues.SpinReduction; }
 
-    public void setTargetVelocity(double rpm) {
-        spinMode = SpinMode.Velocity;
-        spindexerTargetVelocity = rpm;
+    private void setTargetVelocity(double rpm) {
+        spindexerTargetRPM = rpm;
+    }
+
+    public void vibrate(double frequency, double rpm) {
+        if (vibrateCount > (1 / frequency) * 25) {
+            setSpinRPM(rpm, spinDirection == SpinnerDirection.Clockwise ? SpinnerDirection.CounterClockwise : SpinnerDirection.Clockwise);
+            vibrateCount = 0;
+            return;
+        }
+        vibrateCount++;
+    }
+
+    public double getRPM() {
+        return spinMotor.getSensorVelocity() * Constants.SpindexerValues.SpinReduction;
     }
 
     public enum SpinnerDirection {
         Clockwise,
         CounterClockwise
-    }
-
-    public enum SpinMode {
-        Position,
-        Velocity
     }
 
     public void idle() {

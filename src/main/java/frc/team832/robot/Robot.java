@@ -19,7 +19,7 @@ public class Robot extends TimedRobot {
   public final RobotContainer robotContainer = new RobotContainer();
 
   private final Compressor pcm = robotContainer.pcm;
-  private final DrivetrainSubsystem drivetrainSubsystem = robotContainer.drivetrainSubsystem;
+  private final DrivetrainSubsystem drivetrain = robotContainer.drivetrainSubsystem;
   private final IntakeSubsystem intake = robotContainer.intake;
   private final TurretSubsystem turret = robotContainer.turret;
   private final ShooterSubsystem shooter = robotContainer.shooter;
@@ -28,9 +28,9 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit() {
-    if (drivetrainSubsystem.initSuccessful) {
+    if (drivetrain.initSuccessful) {
       System.out.println("Drivetrain - init OK");
-      addPeriodic(drivetrainSubsystem::updateControlLoops, 0.05);
+      addPeriodic(drivetrain::updateControlLoops, 0.05);
     } else {
       System.out.println("Drivetrain - init FAILED");
     }
@@ -49,6 +49,7 @@ public class Robot extends TimedRobot {
 
     if (shooter.initSuccessful) {
       System.out.println("Shooter - init OK");
+      addPeriodic(shooter::updateControlLoops, 0.05);
     } else {
       System.out.println("Shooter - init FAILED");
     }
@@ -90,7 +91,7 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     NeutralMode mode = NeutralMode.kBrake;
-    drivetrainSubsystem.setNeutralMode(mode);
+    drivetrain.setNeutralMode(mode);
     shooter.setFlyheelNeutralMode(NeutralMode.kCoast);
     shooter.setFeederNeutralMode(mode);
 //    turret.holdTurretPosition();
@@ -105,7 +106,7 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     NeutralMode mode = NeutralMode.kCoast;
-    drivetrainSubsystem.setNeutralMode(mode);
+    drivetrain.setNeutralMode(mode);
     shooter.setFlyheelNeutralMode(mode);
     shooter.setFeederNeutralMode(mode);
 //    spindexer.setNeutralMode(mode);
@@ -126,7 +127,7 @@ public class Robot extends TimedRobot {
   public void teleopInit() {
 //    autoCommand.cancel();
     NeutralMode mode = NeutralMode.kBrake;
-    drivetrainSubsystem.setNeutralMode(mode);
+    drivetrain.setNeutralMode(mode);
     shooter.setFlyheelNeutralMode(mode);
     shooter.setFeederNeutralMode(mode);
 //    turret.holdTurretPosition();

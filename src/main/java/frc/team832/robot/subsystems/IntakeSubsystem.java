@@ -51,7 +51,9 @@ public class IntakeSubsystem extends SubsystemBase {
         intakeMotor.set(power);
     }
 
-    public void setPosition(boolean state) {
-        intakePistons.set(state);
+    public void outtake(double power) {
+        extendIntake();
+        OscarMath.clip(power, 0, 1);
+        intakeMotor.set(-power);
     }
 }

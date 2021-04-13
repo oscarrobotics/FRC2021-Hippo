@@ -15,8 +15,12 @@ public class SuperStructure extends SubsystemBase {
 
     public final IdleCommand idleCommand;
     public final TargetingCommand targetingCommand;
-    public final ShootCommandGroup shootCommand;
-    public final IntakeCommand intakeCommand;
+    public final ShootCommandGroup shootOnTarget;
+    public final CloseRangeShootCommandGroup closeShoot;
+    public final TargetingTestCommand testTargeting;
+    public final ExtendIntakeCommand extendIntake;
+    public final ExtendOuttakeCommand extendOuttake;
+    public final RetractIntakeCommand retractIntake;
 
     private double spindexerIntakeRpm = 15;
 
@@ -29,8 +33,12 @@ public class SuperStructure extends SubsystemBase {
 
         idleCommand = new IdleCommand();
         targetingCommand = new TargetingCommand();
-        shootCommand = new ShootCommandGroup();
-        intakeCommand = new IntakeCommand();
+        shootOnTarget = new ShootCommandGroup();
+        closeShoot = new CloseRangeShootCommandGroup();
+        testTargeting = new TargetingTestCommand();
+        extendIntake = new ExtendIntakeCommand();
+        extendOuttake = new ExtendOuttakeCommand();
+        retractIntake = new RetractIntakeCommand();
 
         DashboardManager.addTab(this);
     }
@@ -48,53 +56,6 @@ public class SuperStructure extends SubsystemBase {
         }
     }
 
-    private class IntakeCommand extends CommandBase {
-        IntakeCommand() {
-            addRequirements(shooter, intake, spindexer, turret, SuperStructure.this);
-        }
-
-        @Override
-        public void initialize() {
-            shooter.setFeedRPM(0);
-            turret.setIntake();
-        }
-
-        @Override
-        public void execute() {
-            if (Math.signum(spindexerIntakeRpm) == -1) {
-                intake(0.7, -spindexerIntakeRpm, SpindexerSubsystem.SpinnerDirection.CounterClockwise);
-            } else {
-                intake(0.7, spindexerIntakeRpm, SpindexerSubsystem.SpinnerDirection.Clockwise);
-            }
-        }
-
-        @Override
-        public void end(boolean interrupted) {
-            idleIntake();
-        }
-
-    }
-
-    public class ShootCommandGroup extends ParallelCommandGroup {
-        public ShootCommandGroup() {
-            addRequirements(shooter, intake, spindexer, turret, SuperStructure.this);
-            addCommands(
-                    // tracking target
-                    new FunctionalCommand(() -> turret.setForward(true), SuperStructure.this::trackTarget, (interrupted) -> {}, () -> false),
-                    // wait then shoot
-                    new SequentialCommandGroup(
-                            new WaitCommand(0.5),
-                            new FunctionalCommand(
-                                    () -> spindexer.setSpinRPM(ShooterCalculations.getSpindexerRpm(), SpindexerSubsystem.SpinnerDirection.Clockwise),
-                                    SuperStructure.this::shootAtTarget,
-                                    (interrupted) -> { idleSpindexer(); idleShooter(); },
-                                    () -> false
-                            )
-                    )
-            );
-        }
-    }
-
     public class TargetingCommand extends CommandBase {
         TargetingCommand() {
             addRequirements(shooter, intake, spindexer, turret, SuperStructure.this);
@@ -102,23 +63,18 @@ public class SuperStructure extends SubsystemBase {
 
         @Override
         public void initialize() {
-            idleSpindexer();
-            turret.setForward(true);
+            spindexer.idle();
+            turret.setForward();
         }
 
         @Override
         public void execute() {
             trackTarget();
-//			spindexer.setTargetRotation(getNearestSafeRotationRelativeToFeeder());might be unnecessary
         }
     }
 
     public void RunIdleCommand() {
         idleCommand.schedule();
-    }
-
-    public void RunIntakeCommand() {
-        intakeCommand.schedule();
     }
 
     public void shootAtTarget() {
@@ -131,7 +87,133 @@ public class SuperStructure extends SubsystemBase {
         }
     }
 
+    public class ShootCommandGroup extends ParallelCommandGroup {
+        public ShootCommandGroup() {
+            addRequirements(shooter, intake, spindexer, turret, SuperStructure.this);
+            addCommands(
+                    new RunEndCommand(
+                            SuperStructure.this::trackTarget,
+                            () -> {
+                                shooter.idleAll();
+                                spindexer.idle();
+                            }
+                    ),
+                    new SequentialCommandGroup(
+                            new WaitUntilCommand(SuperStructure.this::readyToShoot),
+                            new InstantCommand(() -> shooter.setFeedRPM(3000)),
+                            new WaitUntilCommand(shooter::atFeedRpm),
+                            new RunEndCommand(
+                                    SuperStructure.this::shootAtTarget,
+                                    () -> {
+                                        shooter.idleAll();
+                                        spindexer.idle();
+                                    }
+                            )
+                    )
+            );
+        }
+    }
+
+    public class CloseRangeShootCommandGroup extends ParallelCommandGroup {
+        public CloseRangeShootCommandGroup() {
+            addRequirements(shooter, intake, spindexer, turret, SuperStructure.this);
+            addCommands(
+                    new StartEndCommand(
+                            () -> {
+                                shooter.setFlywheelRPM(4500);
+                                shooter.setHoodAngle(19);
+                                turret.setForward();
+                            },
+                            () -> {
+                                shooter.idleAll();
+                                spindexer.idle();
+                            }
+                    ),
+                    new SequentialCommandGroup(
+                            new WaitUntilCommand(SuperStructure.this::readyToShoot),
+                            new InstantCommand(() -> shooter.setFeedRPM(2500)),
+                            new WaitUntilCommand(shooter::atFeedRpm),
+                            new StartEndCommand(
+                                    () -> spindexer.setSpinRPM(100, SpindexerSubsystem.SpinnerDirection.Clockwise),
+                                    () -> {
+                                        shooter.idleAll();
+                                        spindexer.idle();
+                                    }
+                            )
+                    )
+            );
+        }
+    }
+
+    public class ExtendIntakeCommand extends SequentialCommandGroup {
+        public ExtendIntakeCommand() {
+            addRequirements(intake, shooter, spindexer, turret, SuperStructure.this);
+            addCommands(
+                    new InstantCommand(intake::extendIntake),
+                    new InstantCommand(() -> spindexer.setSpinRPM(30, SpindexerSubsystem.SpinnerDirection.Clockwise)),
+                    new WaitCommand(0.5),
+                    new InstantCommand(() -> intake.intake(0.5)),
+                    spindexer.getAntiJamSpinCommand(15, 1.0)
+            );
+        }
+    }
+
+    public class RetractIntakeCommand extends SequentialCommandGroup {
+        public RetractIntakeCommand() {
+            addRequirements(intake, shooter, spindexer, turret, SuperStructure.this);
+            addCommands(
+                    new InstantCommand(() -> spindexer.setSpinRPM(20, SpindexerSubsystem.SpinnerDirection.Clockwise)),
+                    new InstantCommand(intake::retractIntake),
+                    new WaitCommand(1.0),
+                    new InstantCommand(intake::stop),
+                    new InstantCommand(spindexer::idle)
+            );
+        }
+    }
+
+    public class ExtendOuttakeCommand extends SequentialCommandGroup {
+        public ExtendOuttakeCommand() {
+            addRequirements(intake, shooter, spindexer, turret, SuperStructure.this);
+            addCommands(
+                    new InstantCommand(intake::extendIntake),
+                    new InstantCommand(() -> spindexer.setSpinRPM(25, SpindexerSubsystem.SpinnerDirection.CounterClockwise)),
+                    new WaitCommand(0.25),
+                    new InstantCommand(() -> intake.outtake(0.4))
+            );
+        }
+    }
+
+    public class TargetingTestCommand extends CommandBase {
+        TargetingTestCommand() {
+            addRequirements(shooter, intake, spindexer, turret, SuperStructure.this);
+        }
+
+        @Override
+        public void initialize() {
+            spindexer.idle();
+            turret.setForward();
+            spindexer.setSpinRPM(60, SpindexerSubsystem.SpinnerDirection.Clockwise);
+        }
+
+        @Override
+        public void execute() {
+            testTrackTarget();
+        }
+
+        @Override
+        public void end(boolean interrupted) {
+            shooter.idleAll();
+            spindexer.idle();
+        }
+    }
+
     //HELPER METHODS
+
+    public boolean readyToShoot() {
+        return shooter.atShootingRpm() && shooter.atHoodAngle() && turret.atTargetAngle();
+    }
+
+
     public void intake(double power, double spinRPM, SpindexerSubsystem.SpinnerDirection direction) {
         intake.intake(power);
         spindexer.setSpinRPM(spinRPM, direction);
@@ -142,6 +224,15 @@ public class SuperStructure extends SubsystemBase {
         if (vision.hasTarget()) {
             turret.trackTarget(spindexer.getVelocity());
             shooter.trackTarget();
+        } else {
+            turret.setTurretTargetDegrees(0.0, true);
+        }
+    }
+
+    public void testTrackTarget() {
+        if (vision.hasTarget()) {
+            turret.trackTarget(spindexer.getRPM());
+            shooter.setHoodToVisionDistance();
         } else {
             turret.setTurretTargetDegrees(0.0, true);
         }
