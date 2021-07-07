@@ -1,8 +1,11 @@
 package frc.team832.robot.subsystems;
 
 import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.controller.PIDController;
 import edu.wpi.first.wpilibj.controller.ProfiledPIDController;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.team832.lib.control.PDP;
 import frc.team832.lib.driverstation.dashboard.DashboardManager;
@@ -20,6 +23,8 @@ public class SpindexerSubsystem extends SubsystemBase {
     private int vibrateCount;
     private double lastSpinSpeed = 0;
     private double spindexerTargetVelocity = 0, spindexerTargetPosition = 0;
+
+    private SpinnerDirection spinDirection = SpinnerDirection.Clockwise;
 
     private SpinMode spinMode;
 
@@ -66,6 +71,14 @@ public class SpindexerSubsystem extends SubsystemBase {
         }
     }
 
+    public Command getAntiJamSpinCommand(double rpmTolerance, double resetTime) {
+        return new AntiStall(rpmTolerance, resetTime);
+    }
+
+    public boolean isStalling(double rpmTolerance) {
+        return Math.abs(spindexerTargetVelocity) > 0 && Math.abs(getVelocity() - spindexerTargetVelocity) > rpmTolerance;
+    }
+
     public void zeroSpindexer() {
         spinMotor.rezeroSensor();
     }
@@ -75,6 +88,10 @@ public class SpindexerSubsystem extends SubsystemBase {
     public void setTargetVelocity(double rpm) {
         spinMode = SpinMode.Velocity;
         spindexerTargetVelocity = rpm;
+    }
+
+    public void setNeutralMode(NeutralMode mode) {
+        spinMotor.setNeutralMode(mode);
     }
 
     public enum SpinnerDirection {
@@ -89,5 +106,45 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     public void idle() {
         setTargetVelocity(0);
+    }
+
+    public class AntiStall extends CommandBase {
+        double lastSwitchSec = 0;
+        double fpgaSecs;
+        double vibrateStartTime;
+        boolean vibrate = false;
+        final double tolerance;
+        final double resetTime;
+
+        public AntiStall(double tolerance, double resetTime) {
+            this.tolerance = tolerance;
+            this.resetTime = resetTime;
+        }
+
+        @Override
+        public void execute() {
+            fpgaSecs = Timer.getFPGATimestamp();
+            if (isStalling(tolerance) && (fpgaSecs - lastSwitchSec >= resetTime) && !vibrate) {
+                vibrate = true;
+                vibrateStartTime = fpgaSecs;
+                lastSwitchSec = fpgaSecs;
+            }
+            if (vibrate && fpgaSecs - vibrateStartTime < resetTime * 0.75) {
+                vibrate(4, 20);
+            } else {
+                vibrate = false;
+                setSpinRPM(30, spinDirection);
+            }
+
+        }
+
+        public void vibrate(double frequency, double rpm) {
+            if (vibrateCount > (1 / frequency) * 25) {
+                setSpinRPM(rpm, spinDirection == SpinnerDirection.Clockwise ? SpinnerDirection.CounterClockwise : SpinnerDirection.Clockwise);
+                vibrateCount = 0;
+                return;
+            }
+            vibrateCount++;
+        }
     }
 }

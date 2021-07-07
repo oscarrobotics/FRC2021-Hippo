@@ -3,7 +3,6 @@ package frc.team832.robot.subsystems;
 import edu.wpi.first.wpilibj2.command.*;
 import frc.team832.lib.driverstation.dashboard.DashboardManager;
 import frc.team832.robot.Constants;
-import frc.team832.robot.utilities.state.ShooterCalculations;
 
 public class SuperStructure extends SubsystemBase {
 
@@ -17,8 +16,11 @@ public class SuperStructure extends SubsystemBase {
     public final TargetingCommand targetingCommand;
     public final ShootCommandGroup shootCommand;
     public final IntakeCommand intakeCommand;
+    public final ExtendIntakeCommand extendIntakeCommand;
+    public final ExtendOuttakeCommand extendOuttakeCommand;
+    public final RetractIntakeCommand retractIntakeCommand;
 
-    private double spindexerIntakeRpm = 15;
+    private final double spindexerIntakeRpm = 15;
 
     public SuperStructure(IntakeSubsystem intake, ShooterSubsystem shooter, SpindexerSubsystem spindexer, TurretSubsystem turret, VisionSubsystem vision) {
         this.intake = intake;
@@ -31,6 +33,9 @@ public class SuperStructure extends SubsystemBase {
         targetingCommand = new TargetingCommand();
         shootCommand = new ShootCommandGroup();
         intakeCommand = new IntakeCommand();
+        extendIntakeCommand = new ExtendIntakeCommand();
+        extendOuttakeCommand = new ExtendOuttakeCommand();
+        retractIntakeCommand = new RetractIntakeCommand();
 
         DashboardManager.addTab(this);
     }
@@ -85,7 +90,7 @@ public class SuperStructure extends SubsystemBase {
                     new SequentialCommandGroup(
                             new WaitCommand(0.5),
                             new FunctionalCommand(
-                                    () -> spindexer.setSpinRPM(ShooterCalculations.getSpindexerRpm(), SpindexerSubsystem.SpinnerDirection.Clockwise),
+                                    () -> spindexer.setSpinRPM(90, SpindexerSubsystem.SpinnerDirection.Clockwise),
                                     SuperStructure.this::shootAtTarget,
                                     (interrupted) -> { idleSpindexer(); idleShooter(); },
                                     () -> false
@@ -128,6 +133,45 @@ public class SuperStructure extends SubsystemBase {
             shooter.setFeedRPM(Constants.ShooterValues.FeedRpm);
         } else {
             turret.setTurretTargetDegrees(0.0, true);
+        }
+    }
+
+
+    public class ExtendIntakeCommand extends SequentialCommandGroup {
+        public ExtendIntakeCommand() {
+            addRequirements(intake, shooter, spindexer, turret, SuperStructure.this);
+            addCommands(
+                    new InstantCommand(intake::extendIntake),
+                    new InstantCommand(() -> spindexer.setSpinRPM(30, SpindexerSubsystem.SpinnerDirection.Clockwise)),
+                    new WaitCommand(0.5),
+                    new InstantCommand(() -> intake.intake(0.5)),
+                    spindexer.getAntiJamSpinCommand(15, 1.0)
+            );
+        }
+    }
+
+    public class ExtendOuttakeCommand extends SequentialCommandGroup {
+        public ExtendOuttakeCommand() {
+            addRequirements(intake, shooter, spindexer, turret, SuperStructure.this);
+            addCommands(
+                    new InstantCommand(intake::extendIntake),
+                    new InstantCommand(() -> spindexer.setSpinRPM(25, SpindexerSubsystem.SpinnerDirection.CounterClockwise)),
+                    new WaitCommand(0.25),
+                    new InstantCommand(() -> intake.outtake(0.4))
+            );
+        }
+    }
+
+    public class RetractIntakeCommand extends SequentialCommandGroup {
+        public RetractIntakeCommand() {
+            addRequirements(intake, shooter, spindexer, turret, SuperStructure.this);
+            addCommands(
+                    new InstantCommand(() -> spindexer.setSpinRPM(20, SpindexerSubsystem.SpinnerDirection.Clockwise)),
+                    new InstantCommand(intake::retractIntake),
+                    new WaitCommand(1.0),
+                    new InstantCommand(intake::stop),
+                    new InstantCommand(spindexer::idle)
+            );
         }
     }
 

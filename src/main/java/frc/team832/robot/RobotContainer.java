@@ -2,11 +2,12 @@ package frc.team832.robot;
 
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RunEndCommand;
 import frc.team832.lib.driverinput.controllers.Attack3;
 import frc.team832.lib.driverinput.controllers.Extreme3DPro;
 import frc.team832.lib.driverinput.controllers.StratComInterface;
 import frc.team832.lib.driverinput.oi.DriverOI;
-import frc.team832.lib.driverinput.oi.OperatorInterface;
 import frc.team832.lib.driverinput.oi.SticksDriverOI;
 import frc.team832.lib.driverinput.oi.XboxDriverOI;
 import frc.team832.lib.power.GrouchPDP;
@@ -26,14 +27,14 @@ public class RobotContainer {
 
     // Subsystems
     public final DrivetrainSubsystem drivetrainSubsystem;
-    public final VisionSubsystem vision;
+    public final VisionSubsystem vision = new VisionSubsystem();
     public final IntakeSubsystem intake = new IntakeSubsystem(pdp);
-    public final ShooterSubsystem shooter = new ShooterSubsystem(pdp);
+    public final ShooterSubsystem shooter = new ShooterSubsystem(pdp, vision);
     public final SpindexerSubsystem spindexer = new SpindexerSubsystem(pdp);
-    public final TurretSubsystem turret = new TurretSubsystem(pdp);
-//    public final Climber climber = new Climber(pdp);
+    public final TurretSubsystem turret = new TurretSubsystem(pdp, vision);
+    public final ClimbSubsystem climber = new ClimbSubsystem(pdp);
 //    public final WheelOfFortune wheelOfFortune = new WheelOfFortune();
-//    public final SuperStructure superStructure = new SuperStructure(intake, shooter, spindexer, turret, vision);
+    public final SuperStructure superStructure = new SuperStructure(intake, shooter, spindexer, turret, vision);
 
     public RobotContainer() {
         if (isSticks) {
@@ -43,16 +44,29 @@ public class RobotContainer {
         } else {
             driverOI = new XboxDriverOI();
         }
-
         drivetrainSubsystem = new DrivetrainSubsystem(pdp, driverOI);
-        vision = new VisionSubsystem(drivetrainSubsystem);
 
-        if (OperatorInterface.getConnectedControllerCount() > 1) {
+//        if (OperatorInterface.getConnectedControllerCount() > 1) {
             configTestingCommands();
-        }
+//        }
     }
 
     private void configTestingCommands() {
+        stratComInterface.getArcadeBlackLeft().whenPressed(superStructure.extendIntakeCommand);
+        stratComInterface.getArcadeWhiteLeft().whenPressed(superStructure.extendOuttakeCommand);
+    }
 
+    private void configOperatorCommands() {
+        stratComInterface.getSC1().whenHeld(superStructure.idleCommand);
+        stratComInterface.getSC2().whenHeld(superStructure.targetingCommand);
+        stratComInterface.getSC3().whenHeld(superStructure.shootCommand);
+        stratComInterface.getSC6().whenHeld(superStructure.extendIntakeCommand).whenReleased(superStructure.retractIntakeCommand);
+
+        stratComInterface.getSingleToggle().whenHeld(new RunEndCommand(() -> climber.adjustHook(stratComInterface.getLeftSlider()), climber::stopExtend));
+        stratComInterface.getSingleToggle().whenReleased(new InstantCommand(climber::retractHook));
+
+
+        stratComInterface.getSCMinus().whileHeld(climber.startClimbUpCommand);
+        stratComInterface.getSCMinus().whenReleased(new InstantCommand(climber::lockClimb));
     }
 }

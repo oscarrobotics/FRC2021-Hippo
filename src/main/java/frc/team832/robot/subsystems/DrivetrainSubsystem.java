@@ -14,7 +14,7 @@ import edu.wpi.first.wpilibj2.command.RunEndCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpiutil.math.Nat;
 import edu.wpi.first.wpiutil.math.VecBuilder;
-import edu.wpi.first.wpiutil.math.numbers.N1;
+import edu.wpi.first.wpiutil.math.numbers.*;
 import frc.team832.lib.drive.SmartDiffDrive;
 import frc.team832.lib.driverinput.oi.DriverOI;
 import frc.team832.lib.driverstation.dashboard.DashboardManager;
@@ -28,6 +28,8 @@ import frc.team832.robot.Constants;
 import frc.team832.robot.RobotContainer;
 import frc.team832.robot.utilities.ArcadeDriveProfile;
 import frc.team832.robot.utilities.TankDriveProfile;
+
+import static frc.team832.robot.Constants.DrivetrainValues.ControlLoopPeriod;
 
 public class DrivetrainSubsystem extends SubsystemBase {
 
@@ -47,32 +49,28 @@ public class DrivetrainSubsystem extends SubsystemBase {
 
     private double latestLeftWheelVolts, latestRightWheelVolts;
 
-    private final double loopPeriod = 0.005;
-
-    private final KalmanFilter<N1, N1, N1> m_observer = new KalmanFilter<>(
-            Nat.N1(), Nat.N1(),
+    private final KalmanFilter<N2, N2, N2> m_observer = new KalmanFilter<>(
+            Nat.N2(), Nat.N2(),
             Constants.DrivetrainValues.kDrivetrainPlant,
-            VecBuilder.fill(3.0), // How accurate we think our model is
-            VecBuilder.fill(0.01), // How accurate we think our encoder data is
-            loopPeriod);
+            VecBuilder.fill(3.0, 1.5), // How accurate we think our model is
+            VecBuilder.fill(0.01, 0.001), // How accurate we think our encoder data is
+            ControlLoopPeriod);
 
-    private final LinearQuadraticRegulator<N1, N1, N1> m_controller
+    private final LinearQuadraticRegulator<N2, N2, N2> m_controller
             = new LinearQuadraticRegulator<>(Constants.DrivetrainValues.kDrivetrainPlant,
-            VecBuilder.fill(8.0), // qelms. Velocity error tolerance, in radians per second. Decrease
+            VecBuilder.fill(8.0, 8.0), // qelms. Velocity error tolerance, in radians per second. Decrease
             // this to more heavily penalize state excursion, or make the controller behave more aggressively.
-            VecBuilder.fill(12.0), // relms. Control effort (voltage) tolerance. Decrease this to more
+            VecBuilder.fill(12.0, 12.0), // relms. Control effort (voltage) tolerance. Decrease this to more
             // heavily penalize control effort, or make the controller less aggressive. 12 is a good
             // starting point because that is the (approximate) maximum voltage of a battery.
-            loopPeriod); // Nominal time between loops. 0.020 for TimedRobot, but can be lower if using notifiers.
+            ControlLoopPeriod); // Nominal time between loops. 0.020 for TimedRobot, but can be lower if using notifiers.
 
-    private final LinearSystemLoop<N1, N1, N1> m_loop = new LinearSystemLoop<>(
+    private final LinearSystemLoop<N2, N2, N2> m_loop = new LinearSystemLoop<>(
             Constants.DrivetrainValues.kDrivetrainPlant,
             m_controller,
             m_observer,
             12.0,
-            loopPeriod);
-
-
+            ControlLoopPeriod);
 
     private final TankDriveProfile tankProfile;
     private final ArcadeDriveProfile arcadeProfile;

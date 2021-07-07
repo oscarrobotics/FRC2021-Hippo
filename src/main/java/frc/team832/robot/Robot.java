@@ -19,18 +19,19 @@ public class Robot extends TimedRobot {
   public final RobotContainer robotContainer = new RobotContainer();
 
   private final Compressor pcm = robotContainer.pcm;
-  private final DrivetrainSubsystem drivetrainSubsystem = robotContainer.drivetrainSubsystem;
+  private final DrivetrainSubsystem drivetrain = robotContainer.drivetrainSubsystem;
   private final IntakeSubsystem intake = robotContainer.intake;
   private final TurretSubsystem turret = robotContainer.turret;
   private final ShooterSubsystem shooter = robotContainer.shooter;
   private final VisionSubsystem vision = robotContainer.vision;
   private final SpindexerSubsystem spindexer = robotContainer.spindexer;
+  private final ClimbSubsystem climber = robotContainer.climber;
 
   @Override
   public void robotInit() {
-    if (drivetrainSubsystem.initSuccessful) {
+    if (drivetrain.initSuccessful) {
       System.out.println("Drivetrain - init OK");
-      addPeriodic(drivetrainSubsystem::updateControlLoops, 0.05);
+      addPeriodic(drivetrain::updateControlLoops, Constants.DrivetrainValues.ControlLoopPeriod);
     } else {
       System.out.println("Drivetrain - init FAILED");
     }
@@ -49,11 +50,13 @@ public class Robot extends TimedRobot {
 
     if (shooter.initSuccessful) {
       System.out.println("Shooter - init OK");
+      addPeriodic(shooter::updateControlLoops, Constants.ShooterValues.ControlLoopPeriod);
     } else {
       System.out.println("Shooter - init FAILED");
     }
 
     if (turret.initSuccessful) {
+      addPeriodic(turret::updateControlLoops, Constants.TurretValues.ControlLoopPeriod);
       System.out.println("Turret - init OK");
     } else {
       System.out.println("Turret - init FAILED");
@@ -65,11 +68,11 @@ public class Robot extends TimedRobot {
       System.out.println("Spindexer - init FAILED");
     }
 
-//    if (climber.initSuccessful) {
-//      System.out.println("Climber - init OK");
-//    } else {
-//      System.out.println("Climber - init FAILED");
-//    }
+    if (climber.initSuccessful) {
+      System.out.println("Climber - init OK");
+    } else {
+      System.out.println("Climber - init FAILED");
+    }
 //
 //    if (wheelOfFortune.initSuccessful) {
 //      System.out.println("WheelOfFortune - init OK");
@@ -90,13 +93,13 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     NeutralMode mode = NeutralMode.kBrake;
-    drivetrainSubsystem.setNeutralMode(mode);
+    drivetrain.setNeutralMode(mode);
     shooter.setFlyheelNeutralMode(NeutralMode.kCoast);
     shooter.setFeederNeutralMode(mode);
 //    turret.holdTurretPosition();
-//    spindexer.setNeutralMode(mode);
-//    turret.setNeutralMode(mode);
-//    shooter.setHood(2.7);
+    spindexer.setNeutralMode(mode);
+    turret.setNeutralMode(mode);
+    shooter.setHoodAngle(Constants.ShooterValues.HoodMinAngle);
 //    climber.zeroDeploy();
 //
 //    autoCommand.schedule();
@@ -104,12 +107,12 @@ public class Robot extends TimedRobot {
 
   @Override
   public void disabledInit() {
-    NeutralMode mode = NeutralMode.kCoast;
-    drivetrainSubsystem.setNeutralMode(mode);
-    shooter.setFlyheelNeutralMode(mode);
-    shooter.setFeederNeutralMode(mode);
-//    spindexer.setNeutralMode(mode);
-//    turret.setNeutralMode(mode);
+    NeutralMode coast = NeutralMode.kCoast;
+    drivetrain.setNeutralMode(coast);
+    shooter.setFlyheelNeutralMode(coast);
+    shooter.setFeederNeutralMode(coast);
+    spindexer.setNeutralMode(coast);
+    turret.setNeutralMode(coast);
 //    climber.lockClimb();
   }
 
@@ -125,14 +128,14 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopInit() {
 //    autoCommand.cancel();
-    NeutralMode mode = NeutralMode.kBrake;
-    drivetrainSubsystem.setNeutralMode(mode);
-    shooter.setFlyheelNeutralMode(mode);
-    shooter.setFeederNeutralMode(mode);
-//    turret.holdTurretPosition();
-//    spindexer.setNeutralMode(mode);
-//    turret.setNeutralMode(mode);
-//    shooter.setHood(2.7);
+    NeutralMode brake = NeutralMode.kBrake;
+    drivetrain.setNeutralMode(brake);
+    shooter.setFlyheelNeutralMode(brake);
+    shooter.setFeederNeutralMode(brake);
+    spindexer.setNeutralMode(brake);
+    turret.setNeutralMode(brake);
+    //    turret.holdTurretPosition();
+    shooter.setHoodAngle(Constants.ShooterValues.HoodMinAngle);
 //    climber.zeroDeploy();
   }
 

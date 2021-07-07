@@ -14,7 +14,6 @@ import frc.team832.lib.power.GrouchPDP;
 import frc.team832.lib.power.impl.SmartMCAttachedPDPSlot;
 import frc.team832.lib.util.OscarMath;
 import frc.team832.robot.Constants;
-import frc.team832.robot.utilities.state.ShooterCalculations;
 
 public class ClimbSubsystem extends SubsystemBase {
     public final boolean initSuccessful;
@@ -30,6 +29,9 @@ public class ClimbSubsystem extends SubsystemBase {
     private SlewRateLimiter climbRamp = new SlewRateLimiter(Constants.ClimberValues.ClimbRateLimit);
 
     private final NetworkTableEntry dashboard_isSafe, dashboard_deployTarget, dashboard_deployPosition;
+
+    public final StartClimbGroup startClimbUpCommand, startClimbDownCommand;
+    public final StopClimbGroup stopClimbCommand;
 
     public ClimbSubsystem(GrouchPDP pdp) {
         DashboardManager.addTab(this);
@@ -62,6 +64,10 @@ public class ClimbSubsystem extends SubsystemBase {
         dashboard_isSafe = DashboardManager.addTabItem(this, "Is Safe", false, DashboardWidget.BooleanBox);
         dashboard_deployTarget = DashboardManager.addTabItem(this, "Deploy Target Pos", 0);
         dashboard_deployPosition = DashboardManager.addTabItem(this, "Deploy Actual Pos", 0);
+
+        startClimbUpCommand = new StartClimbGroup(true);
+        startClimbDownCommand = new StartClimbGroup(false);
+        stopClimbCommand = new StopClimbGroup();
 
         initSuccessful = winchMotor.getCANConnection() && deployMotor.getCANConnection();
     }
@@ -123,10 +129,8 @@ public class ClimbSubsystem extends SubsystemBase {
         deployMotor.rezeroSensor();
     }
 
-
-
     // Commands:
-    public class StartClimbGroup extends SequentialCommandGroup {
+    private class StartClimbGroup extends SequentialCommandGroup {
         public StartClimbGroup(boolean climbUp) {
             addRequirements(ClimbSubsystem.this);
             addCommands(
@@ -137,7 +141,7 @@ public class ClimbSubsystem extends SubsystemBase {
         }
     }
 
-    public class StopClimbGroup extends SequentialCommandGroup {
+    private class StopClimbGroup extends SequentialCommandGroup {
         public StopClimbGroup(){
             addRequirements(ClimbSubsystem.this);
             addCommands(

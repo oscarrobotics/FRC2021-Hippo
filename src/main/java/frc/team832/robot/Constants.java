@@ -104,6 +104,7 @@ public class Constants {
                 LinearSystemId.createDrivetrainVelocitySystem(kDriveGearbox, RobotMass, DriveWheelDiameter / 2.0,
                         TrackWidthMeters / 2.0, RobotMOI, DriveGearReduction);
 
+        public static final double ControlLoopPeriod = 0.05;
     }
 
     @SuppressWarnings("unused")
@@ -128,6 +129,7 @@ public class Constants {
         private static final double FlywheelkA = 0.00103;
 
         public static final double FlywheelMOI = 0.00179;
+        public static final double ControlLoopPeriod = 0.005;
 
         public static final LinearSystem<N1, N1, N1> m_flywheelPlant = LinearSystemId.createFlywheelSystem(
                 DCMotor.getNEO(2),
@@ -141,7 +143,10 @@ public class Constants {
         public static final SimpleMotorFeedforward FlywheelFF = new SimpleMotorFeedforward(FlywheelkS, FlywheelkV, FlywheelkA);
 
         //Hood
-        public static final double HoodReduction = 34.0 / 340.0;
+        public static final int HOOD_MOTOR_CAN_ID = 9;
+        public static final PDPPortNumber HOOD_MOTOR_PDP_SLOT = PDPPortNumber.Port0; // CHANGE NUMBER
+
+        public static final double HoodReduction = 1/95;
 
         public static final double HoodkP = 8.0;
 
@@ -166,17 +171,21 @@ public class Constants {
 
         public static final SimpleMotorFeedforward FeederFF = new SimpleMotorFeedforward(FeederkS, FeederkV, FeederkA);
 
+        public static final double CameraAngle = 56.53;
+        public static final double CameraHeightMeters = 0.43;
+        public static final double PowerportHeightMeters = 2.44;
+
     }
 
     @SuppressWarnings("unused")
     public static class TurretValues {
         public static final int TURRET_MOTOR_CAN_ID = 4;
-        public static final int TURRET_ENCODER_DIO_CHANNEL = 0;
+        public static final int TURRET_ENCODER_DIO_CHANNEL = 2;
 
         public static final PDPPortNumber TURRET_PDP_SLOT = PDPPortNumber.Port4;
 
         public static final double kTurretMOI = 0;
-        public static final double turretGearing = 0;
+        public static final double turretGearing = 200;
 
         public static final double ControlLoopPeriod = 0;
 
