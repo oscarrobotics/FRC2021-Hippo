@@ -128,7 +128,7 @@ public class SuperStructure extends SubsystemBase {
 
     public void shootAtTarget() {
         if (vision.hasTarget()) {
-            turret.trackTarget(spindexer.getVelocity());
+            turret.trackTarget();
             shooter.trackTarget();
             shooter.setFeedRPM(Constants.ShooterValues.FeedRpm);
         } else {
@@ -184,7 +184,7 @@ public class SuperStructure extends SubsystemBase {
 
     public void trackTarget() {
         if (vision.hasTarget()) {
-            turret.trackTarget(spindexer.getVelocity());
+            turret.trackTarget();
             shooter.trackTarget();
         } else {
             turret.setTurretTargetDegrees(0.0, true);

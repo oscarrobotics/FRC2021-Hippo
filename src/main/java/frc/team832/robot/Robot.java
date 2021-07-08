@@ -64,6 +64,7 @@ public class Robot extends TimedRobot {
 
     if (spindexer.initSuccessful) {
       System.out.println("Spindexer - init OK");
+      addPeriodic(spindexer::updateControlLoops, Constants.SpindexerValues.ControlLoopPeriod);
     } else {
       System.out.println("Spindexer - init FAILED");
     }
@@ -99,8 +100,10 @@ public class Robot extends TimedRobot {
 //    turret.holdTurretPosition();
     spindexer.setNeutralMode(mode);
     turret.setNeutralMode(mode);
+    shooter.zeroHood();
     shooter.setHoodAngle(Constants.ShooterValues.HoodMinAngle);
-//    climber.zeroDeploy();
+    intake.setNeutralMode(NeutralMode.kCoast);
+    climber.zeroDeploy();
 //
 //    autoCommand.schedule();
   }
@@ -113,6 +116,7 @@ public class Robot extends TimedRobot {
     shooter.setFeederNeutralMode(coast);
     spindexer.setNeutralMode(coast);
     turret.setNeutralMode(coast);
+    intake.setNeutralMode(coast);
 //    climber.lockClimb();
   }
 

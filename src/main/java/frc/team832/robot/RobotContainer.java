@@ -52,21 +52,27 @@ public class RobotContainer {
     }
 
     private void configTestingCommands() {
-        stratComInterface.getArcadeBlackLeft().whenPressed(superStructure.extendIntakeCommand);
-        stratComInterface.getArcadeWhiteLeft().whenPressed(superStructure.extendOuttakeCommand);
+        stratComInterface.getArcadeBlackLeft().whenPressed(new InstantCommand(() -> spindexer.setSpinRPM(30, SpindexerSubsystem.SpinnerDirection.Clockwise)))
+                .whenReleased(new InstantCommand(spindexer::idle));
+
     }
 
     private void configOperatorCommands() {
-        stratComInterface.getSC1().whenHeld(superStructure.idleCommand);
-        stratComInterface.getSC2().whenHeld(superStructure.targetingCommand);
-        stratComInterface.getSC3().whenHeld(superStructure.shootCommand);
-        stratComInterface.getSC6().whenHeld(superStructure.extendIntakeCommand).whenReleased(superStructure.retractIntakeCommand);
+        stratComInterface.getSC6().whileHeld(superStructure.idleCommand);
+
+        stratComInterface.getSC1().whenHeld(superStructure.targetingCommand);
+        stratComInterface.getSC2().whenHeld(superStructure.shootCommand);
+        stratComInterface.getSC3().whenHeld(superStructure.extendIntakeCommand).whenReleased(superStructure.retractIntakeCommand);
+        stratComInterface.getSC4().whenHeld(superStructure.extendOuttakeCommand).whenReleased(superStructure.retractIntakeCommand);
 
         stratComInterface.getSingleToggle().whenHeld(new RunEndCommand(() -> climber.adjustHook(stratComInterface.getLeftSlider()), climber::stopExtend));
         stratComInterface.getSingleToggle().whenReleased(new InstantCommand(climber::retractHook));
 
 
-        stratComInterface.getSCMinus().whileHeld(climber.startClimbUpCommand);
+        stratComInterface.getSCPlus().whileHeld(climber.startClimbUpCommand);
+        stratComInterface.getSCPlus().whenReleased(new InstantCommand(climber::lockClimb));
+
+        stratComInterface.getSCMinus().whileHeld(climber.startClimbDownCommand);
         stratComInterface.getSCMinus().whenReleased(new InstantCommand(climber::lockClimb));
     }
 }

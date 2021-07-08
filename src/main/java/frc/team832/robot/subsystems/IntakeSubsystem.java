@@ -4,6 +4,7 @@ import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.team832.lib.driverstation.dashboard.DashboardManager;
+import frc.team832.lib.motorcontrol.NeutralMode;
 import frc.team832.lib.motorcontrol2.vendor.CANTalonFX;
 import frc.team832.lib.power.GrouchPDP;
 import frc.team832.lib.util.OscarMath;
@@ -48,14 +49,18 @@ public class IntakeSubsystem extends SubsystemBase {
     public void intake(double power) {
         extendIntake();
         OscarMath.clip(power, 0, 1);
-        intakeMotor.set(power);
+        intakeMotor.set(-power);
     }
 
     public void outtake(double power) {
-        intakeMotor.set(-power);
+        intakeMotor.set(power);
     }
 
     public void setPosition(boolean state) {
         intakePistons.set(state);
+    }
+
+    public void setNeutralMode(NeutralMode mode) {
+        intakeMotor.setNeutralMode(mode);
     }
 }

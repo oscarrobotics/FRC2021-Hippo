@@ -1,7 +1,9 @@
 package frc.team832.robot.subsystems;
 
 import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.controller.LinearQuadraticRegulator;
+import edu.wpi.first.wpilibj.controller.ProfiledPIDController;
 import edu.wpi.first.wpilibj.estimator.KalmanFilter;
 import edu.wpi.first.wpilibj.system.LinearSystemLoop;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -24,41 +26,19 @@ public class ShooterSubsystem extends SubsystemBase {
 
     private final VisionSubsystem vision;
 
-    private double feedTargetRPM, hoodTargetDegrees, flywheelTargetRPM;
+    private ProfiledPIDController hoodPID = new ProfiledPIDController(ShooterValues.HoodkP, 0, 0, ShooterValues.HoodConstraints);
+
+    private double feedTargetRPM, hoodTargetDegrees, hoodDegrees, flywheelTargetRPM;
 
     private final CANSparkMax primaryMotor, secondaryMotor, feederMotor, hoodMotor;
 
-    private final NetworkTableEntry dashboard_wheelRPM, dashboard_flywheelFF, dashboard_hoodPos, dashboard_hoodAngle, dashboard_wheelTargetRPM,
+    private final NetworkTableEntry dashboard_wheelRPM, dashboard_flywheelFF, dashboard_hoodCount, dashboard_hoodAngle, dashboard_wheelTargetRPM,
             dashboard_feedWheelRPM, dashboard_feedWheelTargetRPM, dashboard_feedFF;
-
-    private final KalmanFilter<N1, N1, N1> m_observer = new KalmanFilter<>(
-            Nat.N1(), Nat.N1(),
-            ShooterValues.m_flywheelPlant,
-            VecBuilder.fill(3.0), // How accurate we think our model is
-            VecBuilder.fill(0.01), // How accurate we think our encoder data is
-            ShooterValues.ControlLoopPeriod);
-
-    private final LinearQuadraticRegulator<N1, N1, N1> m_controller
-            = new LinearQuadraticRegulator<>(ShooterValues.m_flywheelPlant,
-            VecBuilder.fill(8.0), // qelms. Velocity error tolerance, in radians per second. Decrease
-            // this to more heavily penalize state excursion, or make the controller behave more aggressively.
-            VecBuilder.fill(12.0), // relms. Control effort (voltage) tolerance. Decrease this to more
-            // heavily penalize control effort, or make the controller less aggressive. 12 is a good
-            // starting point because that is the (approximate) maximum voltage of a battery.
-            ShooterValues.ControlLoopPeriod);
-
-    private final LinearSystemLoop<N1, N1, N1> m_loop = new LinearSystemLoop<>(
-            ShooterValues.m_flywheelPlant,
-            m_controller,
-            m_observer,
-            12.0,
-            ShooterValues.ControlLoopPeriod);
 
     private final REVThroughBoreRelative flywheelEncoder = new REVThroughBoreRelative(0, 1);
 
+    @SuppressWarnings("unused")
     private final SmartMCAttachedPDPSlot primaryFlywheelSlot, secondaryFlywheelSlot, feederSlot, hoodMotorSlot;
-
-    private final double hoodInitPos;
 
     public ShooterSubsystem(GrouchPDP pdp, VisionSubsystem vision) {
         DashboardManager.addTab(this);
@@ -90,9 +70,9 @@ public class ShooterSubsystem extends SubsystemBase {
         primaryMotor.limitInputCurrent(55);
         secondaryMotor.limitInputCurrent(55);
         feederMotor.limitInputCurrent(25);
-        hoodMotor.limitInputCurrent(5); //CHANGE NUMBER
+        hoodMotor.limitInputCurrent(15); //CHANGE NUMBER
 
-        hoodInitPos = hoodMotor.getSensorPosition();
+        zeroHood();
 
         // dashboard
         dashboard_wheelRPM = DashboardManager.addTabItem(this, "Flywheel/RPM", 0.0);
@@ -101,7 +81,7 @@ public class ShooterSubsystem extends SubsystemBase {
         dashboard_feedWheelRPM = DashboardManager.addTabItem(this, "Feeder/RPM", 0.0);
         dashboard_feedWheelTargetRPM = DashboardManager.addTabItem(this, "Feeder/Target RPM", 0.0);
         dashboard_feedFF = DashboardManager.addTabItem(this, "Feeder/FF", 0.0);
-        dashboard_hoodPos = DashboardManager.addTabItem(this, "Hood/Position", 0.0);
+        dashboard_hoodCount = DashboardManager.addTabItem(this, "Hood/Position", 0.0);
         dashboard_hoodAngle = DashboardManager.addTabItem(this, "Hood/Angle", 0.0);
 
         initSuccessful = primaryMotor.getCANConnection() && secondaryMotor.getCANConnection() && feederMotor.getCANConnection();
@@ -110,28 +90,26 @@ public class ShooterSubsystem extends SubsystemBase {
     public void updateDashboardData() {
         dashboard_wheelRPM.setDouble(primaryMotor.getSensorVelocity() * ShooterValues.FlywheelReduction);
         dashboard_feedWheelRPM.setDouble(feederMotor.getSensorVelocity());
-        dashboard_hoodAngle.setDouble(getHoodDegrees());
+        dashboard_hoodAngle.setDouble(hoodDegrees);
+        dashboard_hoodCount.setDouble(hoodMotor.getSensorPosition());
     }
 
     @Override
     public void periodic(){
+        updateDashboardData();
     }
 
-    private void runStateSpaceFlywheelControl(double radsPerSec){
-        m_loop.setNextR(VecBuilder.fill(radsPerSec));
+    public void zeroHood() {
+        hoodMotor.rezeroSensor();
+    }
 
-        // Correct our Kalman filter's state vector estimate with encoder data.
-        m_loop.correct(VecBuilder.fill(flywheelEncoder.getRate()));
+    private void runFlywheelPid() {
+    }
 
-        // Update our LQR to generate new voltage commands and use the voltages to predict the next
-        // state with out Kalman filter.
-        m_loop.predict(0.020);
-
-        // Send the new calculated voltage to the motors.
-        // voltage = duty cycle * battery voltage, so
-        // duty cycle = voltage / battery voltage
-        double nextVoltage = m_loop.getU(0);
-        setFlywheelVoltage(nextVoltage);
+    private void runHoodPid() {
+        hoodDegrees = getHoodDegrees();
+        var hoodEffort = hoodPID.calculate(hoodDegrees, hoodTargetDegrees);
+        hoodMotor.set(hoodEffort / RobotController.getBatteryVoltage());
     }
 
     public void setFeedRPM(double rpm) {
@@ -154,17 +132,14 @@ public class ShooterSubsystem extends SubsystemBase {
         return OscarMath.map(hoodCount, ShooterValues.HoodBottom, ShooterValues.HoodTop, ShooterValues.HoodMinAngle, ShooterValues.HoodMaxAngle);
     }
 
-    private double degreesToHoodCount(double degrees) {
-        return OscarMath.clipMap(degrees, ShooterValues.HoodMinAngle, ShooterValues.HoodMaxAngle, ShooterValues.HoodBottom, ShooterValues.HoodTop);
-    }
-
     public void trackTarget() {
-        setFlywheelRPM(7000);//ShooterCalculations.flywheelRPM
+        setFlywheelRPM(6500);
         setHoodAngle(vision.getSmartHoodAngle());
     }
 
     public void updateControlLoops(){
-        runStateSpaceFlywheelControl(0);
+        runFlywheelPid();
+        runHoodPid();
     }
 
     private void setFlywheelVoltage(double volts){

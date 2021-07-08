@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj.trajectory.TrajectoryConfig;
 import edu.wpi.first.wpilibj.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.trajectory.constraint.DifferentialDriveVoltageConstraint;
 import edu.wpi.first.wpilibj.util.Units;
+import edu.wpi.first.wpiutil.math.MathUtil;
 import edu.wpi.first.wpiutil.math.numbers.N1;
 import edu.wpi.first.wpiutil.math.numbers.N2;
 import frc.team832.lib.drive.ClosedLoopDT;
@@ -104,7 +105,7 @@ public class Constants {
                 LinearSystemId.createDrivetrainVelocitySystem(kDriveGearbox, RobotMass, DriveWheelDiameter / 2.0,
                         TrackWidthMeters / 2.0, RobotMOI, DriveGearReduction);
 
-        public static final double ControlLoopPeriod = 0.05;
+        public static final double ControlLoopPeriod = 0.005;
     }
 
     @SuppressWarnings("unused")
@@ -124,37 +125,39 @@ public class Constants {
         public static final float FlywheelReduction = 50f / 26f;
         public static final float FlywheelRatio = 26f / 50f;
 
-        private static final double FlywheelkS = 0.0437;
+        private static final double FlywheelkS = 0.03;
         private static final double FlywheelkV = 0.00217;
         private static final double FlywheelkA = 0.00103;
 
         public static final double FlywheelMOI = 0.00179;
         public static final double ControlLoopPeriod = 0.005;
 
+        public static SimpleMotorFeedforward FlyWheelFF = new SimpleMotorFeedforward(FlywheelkS, FlywheelkV, FlywheelkA);
+
         public static final LinearSystem<N1, N1, N1> m_flywheelPlant = LinearSystemId.createFlywheelSystem(
                 DCMotor.getNEO(2),
                 FlywheelMOI,
                 FlywheelRatio);
 
-        public static final ClosedLoopConfig ShootingConfig = new ClosedLoopConfig(0.0005, 0, 0, 0.0);
-        public static final ClosedLoopConfig IdleConfig = new ClosedLoopConfig(0.0, 0, 0, 0.0);
-        public static final ClosedLoopConfig SpinupConfig = new ClosedLoopConfig(0.0007, 0, 0, 0.0);
-
-        public static final SimpleMotorFeedforward FlywheelFF = new SimpleMotorFeedforward(FlywheelkS, FlywheelkV, FlywheelkA);
+//        public static final ClosedLoopConfig ShootingConfig = new ClosedLoopConfig(0.0005, 0, 0, 0.0);
+//        public static final ClosedLoopConfig IdleConfig = new ClosedLoopConfig(0.0, 0, 0, 0.0);
+//        public static final ClosedLoopConfig SpinupConfig = new ClosedLoopConfig(0.0007, 0, 0, 0.0);
 
         //Hood
         public static final int HOOD_MOTOR_CAN_ID = 9;
         public static final PDPPortNumber HOOD_MOTOR_PDP_SLOT = PDPPortNumber.Port0; // CHANGE NUMBER
 
-        public static final double HoodReduction = 1/95;
+        public static final TrapezoidProfile.Constraints HoodConstraints = new TrapezoidProfile.Constraints(90, 180);
 
-        public static final double HoodkP = 8.0;
+        public static final double HoodReduction = 1f/95f;
 
-        public static final double HoodMaxAngle = 90;
-        public static final double HoodMinAngle = 10;
+        public static final double HoodkP = 0.025;
 
-        public static final double HoodBottom = 4.554;
-        public static final double HoodTop = 2.092;
+        public static final double HoodMaxAngle = 65;
+        public static final double HoodMinAngle = 25;
+
+        public static final double HoodBottom = 0;
+        public static final double HoodTop = 6;//needs change
 
 
         //Feeder
@@ -184,10 +187,10 @@ public class Constants {
 
         public static final PDPPortNumber TURRET_PDP_SLOT = PDPPortNumber.Port4;
 
-        public static final double kTurretMOI = 0;
+//        public static final double kTurretMOI = 0;
         public static final double turretGearing = 200;
 
-        public static final double ControlLoopPeriod = 0;
+        public static final double ControlLoopPeriod = 0.005;
 
         public static final double PracticeTurretLeftPosition = -83;
         public static final double PracticeTurretRightPosition = 83;
@@ -198,12 +201,16 @@ public class Constants {
         public static final int TurretCenterVisionPosition = 0;
 
         //oscilation period is 0.2785 with kp of 0.07
-        public static final double kP = 0.04;
-        public static final double kI = 0.15;
+        public static final double kP = 0.05;
+//        public static final double kI = 0.15;
         public static final double kD = 0.002;
-        public static final double FFMultiplier = 0.002;
+//        public static final double FFMultiplier = 0.002;
 
-        public static final double IntakeOrientationDegrees = -90;
+        public static final SimpleMotorFeedforward turretFF = new SimpleMotorFeedforward(0.01, 0.02162);
+
+        private static final double maxVelocityRads = Units.rotationsPerMinuteToRadiansPerSecond(120);
+        private static final double maxAccelRads = Units.rotationsPerMinuteToRadiansPerSecond(240);
+        public static final TrapezoidProfile.Constraints Constraints = new TrapezoidProfile.Constraints(maxVelocityRads, maxAccelRads);
 
         public static double convertRotationsToDegrees(double rotations) {
             return OscarMath.map(rotations, 0, 1, -180, 180);
@@ -212,8 +219,6 @@ public class Constants {
         public static double convertDegreesToRotation(double degrees) {
             return OscarMath.map(degrees, -180, 180, 0, 1);
         }
-
-
     }
 
     @SuppressWarnings("unused")
@@ -222,10 +227,11 @@ public class Constants {
 
         public static final PDPPortNumber INTAKE_MOTOR_PDP_SLOT = PDPPortNumber.Port11;
 
+        // TODO: each stage
         public static final float IntakeReduction = 1f / (36f / 18f);
 
         private static final double kS = 0.01;
-        private static final double kV = Motor.kNEO550.kv;
+        private static final double kV = Motor.kFalcon500.kv;
         private static final double kA = 0.001;
 
         public static final SimpleMotorFeedforward FF = new SimpleMotorFeedforward(kS, kV, kA);
@@ -244,12 +250,11 @@ public class Constants {
         private static final Gearbox SpinGearbox = new Gearbox(SpinReduction);
         public static final WheeledPowerTrain SpinPowertrain = new WheeledPowerTrain(SpinGearbox, Motor.kNEO, 1, Units.inchesToMeters(20));
 
-        public static final double SpinkP = 0.01;
-
-        public static final double PositionkP = 2.0;
+        public static final double SpinkP = 0.04;
 
         public static TrapezoidProfile.Constraints Constraints = new TrapezoidProfile.Constraints(SpinPowertrain.calculateMotorRpmFromWheelRpm(90), SpinPowertrain.calculateMotorRpmFromWheelRpm(180));
 
+        public static double ControlLoopPeriod = 0.01;
     }
 
     @SuppressWarnings("unused")
@@ -297,10 +302,10 @@ public class Constants {
     public static class PneumaticsValues {
         public static final int PCM_MODULE_NUM = 0;
 
-        public static final int INTAKE_SOLENOID_ID = 0;
+        public static final int INTAKE_SOLENOID_ID = 3;
         public static final int PROP_UP_SOLENOID_ID = 1;
-        public static final int WHEEL_O_FORTUNE_SOLENOID_ID = 2;
-        public static final int CLIMB_LOCK_SOLENOID_ID = 3;
+        public static final int WHEEL_O_FORTUNE_SOLENOID_ID = 0;
+        public static final int CLIMB_LOCK_SOLENOID_ID = 2;
     }
 
     @SuppressWarnings("unused")
