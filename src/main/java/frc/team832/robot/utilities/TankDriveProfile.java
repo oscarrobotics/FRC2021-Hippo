@@ -81,23 +81,18 @@ public class TankDriveProfile {
 
 	public StoreDriveSpeeds getTankRotateProfile() {
 		DriveAxesSupplier axes = oi.getGreenbergDriveAxes();
-		double rightPow, leftPow;
 		double powerMultiplier = OscarMath.clipMap(Math.abs(axes.getLeftY()), 0, 1, Constants.DrivetrainValues.StickRotateMultiplier, Constants.DrivetrainValues.StickRotateMultiplier * 2);
 
-		rightPow = -OscarMath.signumPow(axes.getRightX() * powerMultiplier, 2);
-		leftPow = OscarMath.signumPow(axes.getRightX() * powerMultiplier, 2);
+		double pow = OscarMath.signumPow(axes.getRightX() * powerMultiplier, 2);
 
-		return new StoreDriveSpeeds(leftPow, rightPow);
+		return new StoreDriveSpeeds(pow, -pow);
 	}
 
 	public StoreDriveSpeeds getTankPreciseRotateProfile() {
 		DriveAxesSupplier axes = oi.getGreenbergDriveAxes();
-		double rightPow, leftPow;
+		double pow = OscarMath.signumPow(axes.getRotation() * Constants.DrivetrainValues.StickRotateMultiplier, 2);
 
-		rightPow = OscarMath.signumPow(axes.getRotation() * Constants.DrivetrainValues.StickRotateMultiplier, 2);
-		leftPow = -OscarMath.signumPow(axes.getRotation() * Constants.DrivetrainValues.StickRotateMultiplier, 2);
-
-		return new StoreDriveSpeeds(leftPow, rightPow);
+		return new StoreDriveSpeeds(pow, -pow);
 	}
 
 	public StoreDriveSpeeds getTankRotateOnCenterProfile() {
@@ -106,7 +101,7 @@ public class TankDriveProfile {
 
 		rotation = OscarMath.signumPow(axes.getRotation() * Constants.DrivetrainValues.StickRotateOnCenterMultiplier, 3);
 
-		return new StoreDriveSpeeds(-rotation, rotation);
+		return new StoreDriveSpeeds(rotation, -rotation);
 	}
 
 	private double getNormalPower(double stick) {

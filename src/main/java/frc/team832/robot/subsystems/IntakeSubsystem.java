@@ -33,11 +33,6 @@ public class IntakeSubsystem extends SubsystemBase {
         intakeMotor.set(0);
     }
 
-    public void stopAll() {
-        retractIntake();
-        intakeMotor.set(0);
-    }
-
     public void extendIntake() {
         intakePistons.set(true);
     }

@@ -1,9 +1,7 @@
 package frc.team832.robot.subsystems;
 
 import edu.wpi.first.networktables.NetworkTableEntry;
-import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.controller.ProfiledPIDController;
-import edu.wpi.first.wpilibj.util.Units;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.team832.lib.driverstation.dashboard.DashboardManager;
 import frc.team832.lib.motorcontrol.NeutralMode;
@@ -19,18 +17,16 @@ public class TurretSubsystem extends SubsystemBase {
 
     public final boolean initSuccessful;
 
-    private double turretTargetDeg;
-    private boolean isVision;
-    private double turretFF = 0;
+    private double turretTargetDeg = 0;
 
     private final VisionSubsystem vision;
 
     private final CANSparkMax turretMotor;
     private final REVThroughBorePWM encoder;
     private final PDPSlot pdpSlot;
-    private final ProfiledPIDController pidController;
+    private final ProfiledPIDController pid;
 
-    private NetworkTableEntry dashboard_turretPos, dashboard_turretPow, dashboard_turretTarget;
+    private NetworkTableEntry dashboard_turretPos, dashboard_turretPIDEffort, dashboard_turretTarget;
 
     public TurretSubsystem(GrouchPDP pdp, VisionSubsystem vision) {
         setName("Turret");
@@ -46,29 +42,31 @@ public class TurretSubsystem extends SubsystemBase {
         turretMotor.limitInputCurrent(25);
         turretMotor.setNeutralMode(NeutralMode.kBrake);
 
-        pidController = new ProfiledPIDController(TurretValues.kP, 0, TurretValues.kD, TurretValues.Constraints);
+        pid = new ProfiledPIDController(TurretValues.kP, TurretValues.kI, TurretValues.kD, TurretValues.Constraints);
+        pid.setIntegratorRange(-0.1, 0.1);
 
         dashboard_turretPos = DashboardManager.addTabItem(this, "Position", 0.0);
-        dashboard_turretPow = DashboardManager.addTabItem(this, "Power", 0.0);
+        dashboard_turretPIDEffort = DashboardManager.addTabItem(this, "Effort", 0.0);
         dashboard_turretTarget = DashboardManager.addTabItem(this, "Target", 0.0);
 
         initSuccessful = turretMotor.getCANConnection();
     }
 
     public void updateControlLoops() {
-        if (RobotState.isEnabled()) {
-            var currentDegrees = TurretValues.convertRotationsToDegrees(encoder.get());
-            var currentRads = Units.degreesToRadians(currentDegrees);
-            var errorDegrees = turretTargetDeg - currentDegrees;
-//            var cur = encoder.get();
-//            var errorDeg = turretTargetDeg - cur;
-//            var effort = (TurretValues.kP * errorDeg) + TurretValues.turretFF.calculate();
-//            setVoltage(effort);
-        }
+          runTurretPid();
     }
 
-    public void setTurretTargetDegrees(double pos, boolean visionMode) {
-        isVision = visionMode;
+    private void runTurretPid() {
+        turretMotor.set(pid.calculate(getDegrees(), turretTargetDeg));
+    }
+
+    public void updateDashboardData() {
+        dashboard_turretPos.setDouble(getDegrees());
+        dashboard_turretPIDEffort.setDouble(pid.calculate(getDegrees(), turretTargetDeg));
+        dashboard_turretTarget.setDouble(turretTargetDeg);
+    }
+
+    public void setTurretTargetDegrees(double pos) {
         turretTargetDeg = pos;
     }
 
@@ -76,7 +74,7 @@ public class TurretSubsystem extends SubsystemBase {
         double visionOffset = 0;
         if (vision.hasTarget()) visionOffset = vision.getTarget().getYaw();
 
-        setTurretTargetDegrees(visionOffset + getDegrees(), true);
+        setTurretTargetDegrees(visionOffset + getDegrees());
     }
 
     double getRotations() {
@@ -84,28 +82,18 @@ public class TurretSubsystem extends SubsystemBase {
     }
 
     double getDegrees() {
-        return TurretValues.convertRotationsToDegrees(getRotations());
+        return TurretValues.convertRotationsToDegrees(getRotations()) + 160;
     }
 
-    public void setForward(boolean isVision) { setTurretTargetDegrees(TurretValues.TurretCenterVisionPosition, isVision); }
+    public void setForward() { setTurretTargetDegrees(TurretValues.TurretCenterVisionPosition); }
 
     public void setIntake() {
-        setTurretTargetDegrees(0, false);
+        setTurretTargetDegrees(0);
     }
 
     @Override
     public void periodic() {
         updateDashboardData();
-    }
-
-    private void setVoltage(double voltage){
-        turretMotor.set(voltage / turretMotor.getInputVoltage());
-    }
-
-    public void updateDashboardData() {
-//        dashboard_turretPos.setDouble(getDegrees());
-        dashboard_turretPow.setDouble(turretMotor.getOutputVoltage());
-//        dashboard_turretTarget.setDouble(turretTargetDeg);
     }
 
     public void setNeutralMode(NeutralMode mode) {

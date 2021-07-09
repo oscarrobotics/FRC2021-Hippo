@@ -28,7 +28,7 @@ public class ClimbSubsystem extends SubsystemBase {
     private ProfiledPIDController extendPID = new ProfiledPIDController(Constants.ClimberValues.ExtendkP, Constants.ClimberValues.ExtendkI, Constants.ClimberValues.ExtendkD, Constants.ClimberValues.ExtendConstraints);
     private SlewRateLimiter climbRamp = new SlewRateLimiter(Constants.ClimberValues.ClimbRateLimit);
 
-    private final NetworkTableEntry dashboard_isSafe, dashboard_deployTarget, dashboard_deployPosition;
+    private final NetworkTableEntry dashboard_isSafe, dashboard_deployTarget, dashboard_deployPosition, dashboard_pidEffort, dashboard_extendError;
 
     public final StartClimbGroup startClimbUpCommand, startClimbDownCommand;
     public final StopClimbGroup stopClimbCommand;
@@ -52,7 +52,7 @@ public class ClimbSubsystem extends SubsystemBase {
         winchMotor.setNeutralMode(NeutralMode.kCoast);
         deployMotor.setNeutralMode(NeutralMode.kBrake);
 
-        winchMotor.setInverted(false);
+        winchMotor.setInverted(true);
         winchMotor.setSensorPhase(true);
 
         deployMotor.setInverted(false);
@@ -64,6 +64,8 @@ public class ClimbSubsystem extends SubsystemBase {
         dashboard_isSafe = DashboardManager.addTabItem(this, "Is Safe", false, DashboardWidget.BooleanBox);
         dashboard_deployTarget = DashboardManager.addTabItem(this, "Deploy Target Pos", 0);
         dashboard_deployPosition = DashboardManager.addTabItem(this, "Deploy Actual Pos", 0);
+        dashboard_pidEffort = DashboardManager.addTabItem(this, "Effort", 0);
+        dashboard_extendError = DashboardManager.addTabItem(this, "Error", 0);
 
         startClimbUpCommand = new StartClimbGroup(true);
         startClimbDownCommand = new StartClimbGroup(false);
@@ -75,7 +77,10 @@ public class ClimbSubsystem extends SubsystemBase {
     public void periodic() {
         runExtendPID();
         runClimbPID();
-        dashboard_isSafe.setBoolean(isWinchSafe());
+//        dashboard_isSafe.setBoolean(isWinchSafe());
+        dashboard_deployTarget.setDouble(extendTarget);
+        dashboard_deployPosition.setDouble(deployMotor.getSensorPosition());
+        dashboard_extendError.setDouble(deployMotor.getSensorPosition() - extendTarget);
     }
 
     public void unwindWinch() {
@@ -108,7 +113,9 @@ public class ClimbSubsystem extends SubsystemBase {
     }
 
     private void runExtendPID() {
-        deployMotor.set(extendPID.calculate(deployMotor.getSensorPosition(), extendTarget));
+        double pow = extendPID.calculate(deployMotor.getSensorPosition(), extendTarget);
+        deployMotor.set(pow);
+        dashboard_pidEffort.setDouble(pow);
     }
 
     private void runClimbPID() {
@@ -120,13 +127,14 @@ public class ClimbSubsystem extends SubsystemBase {
     }
 
     public void lockClimb() {
+        stopClimb();
         climbLock.set(false);
     }
 
     public void unlockClimb() { climbLock.set(true); }
 
     public void zeroDeploy() {
-        deployMotor.rezeroSensor();
+//        deployMotor.rezeroSensor();
     }
 
     // Commands:

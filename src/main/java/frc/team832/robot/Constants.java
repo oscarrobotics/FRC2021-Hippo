@@ -125,9 +125,11 @@ public class Constants {
         public static final float FlywheelReduction = 50f / 26f;
         public static final float FlywheelRatio = 26f / 50f;
 
-        private static final double FlywheelkS = 0.03;
-        private static final double FlywheelkV = 0.00217;
-        private static final double FlywheelkA = 0.00103;
+        public static final double FlywheelkP = 0.00025;
+
+        private static final double FlywheelkS = 0.02;
+        private static final double FlywheelkV = 0.0012;
+        private static final double FlywheelkA = 0.0002;
 
         public static final double FlywheelMOI = 0.00179;
         public static final double ControlLoopPeriod = 0.005;
@@ -151,17 +153,20 @@ public class Constants {
 
         public static final double HoodReduction = 1f/95f;
 
-        public static final double HoodkP = 0.025;
+        public static final double HoodkP = 0.125;
 
         public static final double HoodMaxAngle = 65;
         public static final double HoodMinAngle = 25;
+
+        public static final double HoodAutoLineAngle = 45.7; // 10ft
+        public static final double HoodTrenchLineAngle = 47.8; // 207in
 
         public static final double HoodBottom = 0;
         public static final double HoodTop = 6;//needs change
 
 
         //Feeder
-        public static final double FeedRpm = 3000;
+        public static final double FeedRpm = 5000;
 
         public static final double FeedkP = 0.0003;
         public static final double FeedkF = 0;
@@ -201,12 +206,9 @@ public class Constants {
         public static final int TurretCenterVisionPosition = 0;
 
         //oscilation period is 0.2785 with kp of 0.07
-        public static final double kP = 0.05;
-//        public static final double kI = 0.15;
-        public static final double kD = 0.002;
-//        public static final double FFMultiplier = 0.002;
-
-        public static final SimpleMotorFeedforward turretFF = new SimpleMotorFeedforward(0.01, 0.02162);
+        public static final double kP = 0.013;
+        public static final double kI = 0.00015;
+        public static final double kD = 0.00001;//0.0001
 
         private static final double maxVelocityRads = Units.rotationsPerMinuteToRadiansPerSecond(120);
         private static final double maxAccelRads = Units.rotationsPerMinuteToRadiansPerSecond(240);
@@ -250,7 +252,7 @@ public class Constants {
         private static final Gearbox SpinGearbox = new Gearbox(SpinReduction);
         public static final WheeledPowerTrain SpinPowertrain = new WheeledPowerTrain(SpinGearbox, Motor.kNEO, 1, Units.inchesToMeters(20));
 
-        public static final double SpinkP = 0.04;
+        public static final double SpinkP = 0.02;
 
         public static TrapezoidProfile.Constraints Constraints = new TrapezoidProfile.Constraints(SpinPowertrain.calculateMotorRpmFromWheelRpm(90), SpinPowertrain.calculateMotorRpmFromWheelRpm(180));
 
@@ -267,19 +269,18 @@ public class Constants {
 
         public static final float ExtendReduction = 1f / (5f / 1f);
 
-        public static final double MaxExtend = -62;
-        public static final double MinExtend = -40;
+        public static final double MaxExtend = 62 * 2.89;
+        public static final double MinExtend = 40 * 2.89;
         public static final double Retract = -0.25;
 
-        public static final TrapezoidProfile.Constraints ExtendConstraints = new TrapezoidProfile.Constraints(120, 480);
-        public static final TrapezoidProfile.Constraints ClimbConstraints = new TrapezoidProfile.Constraints(10, 20);
-        //velocity might be acceleration and acceleration might be jerk because PID is running on velocity and not position
+        public static final TrapezoidProfile.Constraints ExtendConstraints = new TrapezoidProfile.Constraints(100, 350);
 
         public static final double ExtendkP = 0.08;
         public static final double ExtendkI = 0.00;
         public static final double ExtendkD = 0.00;
+
         public static final double ClimbkP = 0.01;
-        public static final double ClimbRateLimit = 1.00;
+        public static final double ClimbRateLimit = 1.50;
 
         public static double ClimbVelocity = 10;
     }

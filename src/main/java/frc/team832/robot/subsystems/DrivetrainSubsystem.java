@@ -49,29 +49,6 @@ public class DrivetrainSubsystem extends SubsystemBase {
 
     private double latestLeftWheelVolts, latestRightWheelVolts;
 
-    private final KalmanFilter<N2, N2, N2> m_observer = new KalmanFilter<>(
-            Nat.N2(), Nat.N2(),
-            Constants.DrivetrainValues.kDrivetrainPlant,
-            VecBuilder.fill(3.0, 1.5), // How accurate we think our model is
-            VecBuilder.fill(0.01, 0.001), // How accurate we think our encoder data is
-            ControlLoopPeriod);
-
-    private final LinearQuadraticRegulator<N2, N2, N2> m_controller
-            = new LinearQuadraticRegulator<>(Constants.DrivetrainValues.kDrivetrainPlant,
-            VecBuilder.fill(8.0, 8.0), // qelms. Velocity error tolerance, in radians per second. Decrease
-            // this to more heavily penalize state excursion, or make the controller behave more aggressively.
-            VecBuilder.fill(12.0, 12.0), // relms. Control effort (voltage) tolerance. Decrease this to more
-            // heavily penalize control effort, or make the controller less aggressive. 12 is a good
-            // starting point because that is the (approximate) maximum voltage of a battery.
-            ControlLoopPeriod); // Nominal time between loops. 0.020 for TimedRobot, but can be lower if using notifiers.
-
-    private final LinearSystemLoop<N2, N2, N2> m_loop = new LinearSystemLoop<>(
-            Constants.DrivetrainValues.kDrivetrainPlant,
-            m_controller,
-            m_observer,
-            12.0,
-            ControlLoopPeriod);
-
     private final TankDriveProfile tankProfile;
     private final ArcadeDriveProfile arcadeProfile;
 

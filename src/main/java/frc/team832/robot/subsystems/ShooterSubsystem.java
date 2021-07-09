@@ -3,6 +3,7 @@ package frc.team832.robot.subsystems;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.controller.LinearQuadraticRegulator;
+import edu.wpi.first.wpilibj.controller.PIDController;
 import edu.wpi.first.wpilibj.controller.ProfiledPIDController;
 import edu.wpi.first.wpilibj.estimator.KalmanFilter;
 import edu.wpi.first.wpilibj.system.LinearSystemLoop;
@@ -27,13 +28,22 @@ public class ShooterSubsystem extends SubsystemBase {
     private final VisionSubsystem vision;
 
     private ProfiledPIDController hoodPID = new ProfiledPIDController(ShooterValues.HoodkP, 0, 0, ShooterValues.HoodConstraints);
+    private PIDController flywheelPID = new PIDController(ShooterValues.FlywheelkP, 0, 0);
+    private PIDController feederPID = new PIDController(ShooterValues.FeedkP, 0, 0);
 
-    private double feedTargetRPM, hoodTargetDegrees, hoodDegrees, flywheelTargetRPM;
+    // hood
+    private double hoodTargetDegrees, hoodActualDegrees, hoodCount, hoodPIDEffort, hoodFFEffort;
+    private final NetworkTableEntry dash_hoodTargetDegrees, dash_hoodActualDegrees, dash_hoodCount, dash_hoodPIDEffort, dash_hoodFFEffort;
+
+    // flywheel
+    private double flywheelTargetRPM, flywheelActualRPM, flywheelMotorRPM, flywheelPIDEffort, flywheelFFEffort;
+    private final NetworkTableEntry dash_wheelTargetRPM, dash_wheelActualRPM, dash_wheelMotorRPM, dash_wheelFFEffort, dash_wheelPIDEffort;
+
+    // feeder
+    private double feedTargetRPM, feedActualRPM, feedPIDEffort, feedFFEffort;
+    private final NetworkTableEntry dash_feedTargetRPM, dash_feedActualRPM, dash_feedPIDEffort, dash_feedFFEffort;
 
     private final CANSparkMax primaryMotor, secondaryMotor, feederMotor, hoodMotor;
-
-    private final NetworkTableEntry dashboard_wheelRPM, dashboard_flywheelFF, dashboard_hoodCount, dashboard_hoodAngle, dashboard_wheelTargetRPM,
-            dashboard_feedWheelRPM, dashboard_feedWheelTargetRPM, dashboard_feedFF;
 
     private final REVThroughBoreRelative flywheelEncoder = new REVThroughBoreRelative(0, 1);
 
@@ -64,7 +74,7 @@ public class ShooterSubsystem extends SubsystemBase {
         setFeederNeutralMode(NeutralMode.kBrake);
         hoodMotor.setNeutralMode(NeutralMode.kBrake);
 
-        primaryMotor.setInverted(false);
+        primaryMotor.setInverted(true);
         secondaryMotor.follow(primaryMotor, true);
 
         primaryMotor.limitInputCurrent(55);
@@ -73,25 +83,49 @@ public class ShooterSubsystem extends SubsystemBase {
         hoodMotor.limitInputCurrent(15); //CHANGE NUMBER
 
         zeroHood();
+        hoodTargetDegrees = ShooterValues.HoodMinAngle;
 
         // dashboard
-        dashboard_wheelRPM = DashboardManager.addTabItem(this, "Flywheel/RPM", 0.0);
-        dashboard_wheelTargetRPM = DashboardManager.addTabItem(this, "Flywheel/Target RPM", 0.0);
-        dashboard_flywheelFF = DashboardManager.addTabItem(this, "Flywheel/FF", 0.0);
-        dashboard_feedWheelRPM = DashboardManager.addTabItem(this, "Feeder/RPM", 0.0);
-        dashboard_feedWheelTargetRPM = DashboardManager.addTabItem(this, "Feeder/Target RPM", 0.0);
-        dashboard_feedFF = DashboardManager.addTabItem(this, "Feeder/FF", 0.0);
-        dashboard_hoodCount = DashboardManager.addTabItem(this, "Hood/Position", 0.0);
-        dashboard_hoodAngle = DashboardManager.addTabItem(this, "Hood/Angle", 0.0);
+
+        // feeder
+        dash_feedTargetRPM = DashboardManager.addTabItem(this, "Feeder/Target RPM", 0.0);
+        dash_feedActualRPM = DashboardManager.addTabItem(this, "Feeder/Actual RPM", 0.0);
+        dash_feedFFEffort = DashboardManager.addTabItem(this, "Feeder/FF", 0.0);
+        dash_feedPIDEffort = DashboardManager.addTabItem(this, "Feeder/PID", 0.0);
+
+        // flywheel
+        dash_wheelTargetRPM = DashboardManager.addTabItem(this, "Flywheel/Target RPM", 0.0);
+        dash_wheelActualRPM = DashboardManager.addTabItem(this, "Flywheel/Actual RPM", 0.0);
+        dash_wheelMotorRPM = DashboardManager.addTabItem(this, "Flywheel/Motor RPM", 0.0);
+        dash_wheelFFEffort = DashboardManager.addTabItem(this, "Flywheel/FF", 0.0);
+        dash_wheelPIDEffort = DashboardManager.addTabItem(this, "Flywheel/PID", 0.0);
+
+        dash_hoodTargetDegrees = DashboardManager.addTabItem(this, "Hood/Target Deg", 0.0);
+        dash_hoodActualDegrees = DashboardManager.addTabItem(this, "Hood/Actual Deg", 0.0);
+        dash_hoodCount = DashboardManager.addTabItem(this, "Hood/EncCount", 0.0);
+        dash_hoodPIDEffort = DashboardManager.addTabItem(this, "Hood/PID", 0.0);
+        dash_hoodFFEffort = DashboardManager.addTabItem(this, "Hood/FF", 0.0);
 
         initSuccessful = primaryMotor.getCANConnection() && secondaryMotor.getCANConnection() && feederMotor.getCANConnection();
     }
 
-    public void updateDashboardData() {
-        dashboard_wheelRPM.setDouble(primaryMotor.getSensorVelocity() * ShooterValues.FlywheelReduction);
-        dashboard_feedWheelRPM.setDouble(feederMotor.getSensorVelocity());
-        dashboard_hoodAngle.setDouble(hoodDegrees);
-        dashboard_hoodCount.setDouble(hoodMotor.getSensorPosition());
+    private void updateDashboardData() {
+        dash_wheelTargetRPM.setDouble(flywheelTargetRPM);
+        dash_wheelActualRPM.setDouble(getFlywheelRPM_Encoder());
+        dash_wheelMotorRPM.setDouble(primaryMotor.getSensorVelocity());
+        dash_wheelPIDEffort.setDouble(flywheelPIDEffort);
+        dash_wheelFFEffort.setDouble(flywheelFFEffort);
+
+        dash_hoodTargetDegrees.setDouble(hoodTargetDegrees);
+        dash_hoodActualDegrees.setDouble(hoodActualDegrees);
+        dash_hoodCount.setDouble(hoodMotor.getSensorPosition());
+        dash_hoodPIDEffort.setDouble(hoodPIDEffort);
+        dash_hoodFFEffort.setDouble(hoodFFEffort);
+
+        dash_feedActualRPM.setDouble(feedActualRPM);
+        dash_feedTargetRPM.setDouble(feedTargetRPM);
+        dash_feedFFEffort.setDouble(feedFFEffort);
+        dash_feedPIDEffort.setDouble(feedPIDEffort);
     }
 
     @Override
@@ -104,46 +138,71 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     private void runFlywheelPid() {
+        flywheelActualRPM = getFlywheelRPM_Encoder();
+
+        if (flywheelTargetRPM != 0) {
+            flywheelFFEffort = ShooterValues.FlyWheelFF.calculate(flywheelTargetRPM) / 12.0;
+            flywheelPIDEffort =  flywheelPID.calculate(flywheelActualRPM, flywheelTargetRPM) / 12.0;
+        } else {
+            flywheelFFEffort = 0;
+            flywheelPIDEffort = 0;
+        }
+
+        primaryMotor.set(flywheelFFEffort + flywheelPIDEffort);
+    }
+
+    private void runFeederPid() {
+        feedActualRPM = feederMotor.getSensorVelocity();
+
+        if (feedTargetRPM != 0) {
+            feedFFEffort = ShooterValues.FeederFF.calculate(feedTargetRPM);
+            feedPIDEffort = feederPID.calculate(feedActualRPM, feedTargetRPM);
+        } else {
+            feedFFEffort = 0;
+            feedPIDEffort = 0;
+        }
+
+        feederMotor.set(feedPIDEffort + feedFFEffort);
     }
 
     private void runHoodPid() {
-        hoodDegrees = getHoodDegrees();
-        var hoodEffort = hoodPID.calculate(hoodDegrees, hoodTargetDegrees);
-        hoodMotor.set(hoodEffort / RobotController.getBatteryVoltage());
+        hoodActualDegrees = getHoodDegrees();
+        hoodPIDEffort = hoodPID.calculate(hoodActualDegrees, hoodTargetDegrees);
+        hoodMotor.set(hoodPIDEffort / RobotController.getBatteryVoltage());
     }
 
-    public void setFeedRPM(double rpm) {
+    void setFeedRPM(double rpm) {
         feedTargetRPM = rpm;
     }
 
-    public void setFlywheelRPM(double wheelTargetRPM) {
+    void setFlywheelRPM(double wheelTargetRPM) {
         flywheelTargetRPM = wheelTargetRPM;
     }
 
     public void setHoodAngle(double degrees) {
+        if (degrees > 61) degrees = 61;
         hoodTargetDegrees = degrees;
     }
 
     private double getHoodDegrees() {
-        return hoodCountToDegrees(hoodMotor.getSensorPosition());
+        hoodCount = hoodMotor.getSensorPosition();
+        return hoodCountToDegrees(hoodCount);
     }
 
     private double hoodCountToDegrees(double hoodCount) {
         return OscarMath.map(hoodCount, ShooterValues.HoodBottom, ShooterValues.HoodTop, ShooterValues.HoodMinAngle, ShooterValues.HoodMaxAngle);
     }
 
-    public void trackTarget() {
+    void trackTarget() {
         setFlywheelRPM(6500);
-        setHoodAngle(vision.getSmartHoodAngle());
+//        setHoodAngle(vision.getSmartHoodAngle());
+//        setHoodAngle(45);
     }
 
     public void updateControlLoops(){
         runFlywheelPid();
+        runFeederPid();
         runHoodPid();
-    }
-
-    private void setFlywheelVoltage(double volts){
-        primaryMotor.set(volts / 12);
     }
 
     public void setFlyheelNeutralMode(NeutralMode mode) {
@@ -155,8 +214,11 @@ public class ShooterSubsystem extends SubsystemBase {
         feederMotor.setNeutralMode(mode);
     }
 
-    public double getFlywheelRPM_Encoder() {
+    private double getFlywheelRPM_Encoder() {
         return (flywheelEncoder.getRate() / 2048) * 60;
     }
 
+    public void setHoodNeutralMode(NeutralMode mode) {
+        hoodMotor.setNeutralMode(mode);
+    }
 }

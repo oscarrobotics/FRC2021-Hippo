@@ -97,7 +97,7 @@ public class Robot extends TimedRobot {
     drivetrain.setNeutralMode(mode);
     shooter.setFlyheelNeutralMode(NeutralMode.kCoast);
     shooter.setFeederNeutralMode(mode);
-//    turret.holdTurretPosition();
+    shooter.setHoodNeutralMode(mode);
     spindexer.setNeutralMode(mode);
     turret.setNeutralMode(mode);
     shooter.zeroHood();
@@ -114,10 +114,11 @@ public class Robot extends TimedRobot {
     drivetrain.setNeutralMode(coast);
     shooter.setFlyheelNeutralMode(coast);
     shooter.setFeederNeutralMode(coast);
+    shooter.setHoodNeutralMode(coast);
     spindexer.setNeutralMode(coast);
     turret.setNeutralMode(coast);
     intake.setNeutralMode(coast);
-//    climber.lockClimb();
+    climber.lockClimb();
   }
 
   @Override
@@ -136,11 +137,10 @@ public class Robot extends TimedRobot {
     drivetrain.setNeutralMode(brake);
     shooter.setFlyheelNeutralMode(brake);
     shooter.setFeederNeutralMode(brake);
+    shooter.setHoodNeutralMode(brake);
     spindexer.setNeutralMode(brake);
     turret.setNeutralMode(brake);
-    //    turret.holdTurretPosition();
     shooter.setHoodAngle(Constants.ShooterValues.HoodMinAngle);
-//    climber.zeroDeploy();
   }
 
   @Override

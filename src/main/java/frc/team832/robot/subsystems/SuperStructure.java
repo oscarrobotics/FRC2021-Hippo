@@ -49,7 +49,7 @@ public class SuperStructure extends SubsystemBase {
         @Override
         public void initialize() {
             idleAll();
-            turret.setTurretTargetDegrees(0, false);
+            turret.setTurretTargetDegrees(0);
         }
     }
 
@@ -67,9 +67,9 @@ public class SuperStructure extends SubsystemBase {
         @Override
         public void execute() {
             if (Math.signum(spindexerIntakeRpm) == -1) {
-                intake(0.7, -spindexerIntakeRpm, SpindexerSubsystem.SpinnerDirection.CounterClockwise);
+                intake(0.6, -spindexerIntakeRpm, SpindexerSubsystem.SpinnerDirection.CounterClockwise);
             } else {
-                intake(0.7, spindexerIntakeRpm, SpindexerSubsystem.SpinnerDirection.Clockwise);
+                intake(0.6, spindexerIntakeRpm, SpindexerSubsystem.SpinnerDirection.Clockwise);
             }
         }
 
@@ -81,16 +81,16 @@ public class SuperStructure extends SubsystemBase {
     }
 
     public class ShootCommandGroup extends ParallelCommandGroup {
-        public ShootCommandGroup() {
+        ShootCommandGroup() {
             addRequirements(shooter, intake, spindexer, turret, SuperStructure.this);
             addCommands(
                     // tracking target
-                    new FunctionalCommand(() -> turret.setForward(true), SuperStructure.this::trackTarget, (interrupted) -> {}, () -> false),
+                    new FunctionalCommand(turret::setForward, SuperStructure.this::trackTarget, (interrupted) -> {}, () -> false),
                     // wait then shoot
                     new SequentialCommandGroup(
                             new WaitCommand(0.5),
                             new FunctionalCommand(
-                                    () -> spindexer.setSpinRPM(90, SpindexerSubsystem.SpinnerDirection.Clockwise),
+                                    () -> spindexer.setSpinRPM(30, SpindexerSubsystem.SpinnerDirection.Clockwise),
                                     SuperStructure.this::shootAtTarget,
                                     (interrupted) -> { idleSpindexer(); idleShooter(); },
                                     () -> false
@@ -108,7 +108,7 @@ public class SuperStructure extends SubsystemBase {
         @Override
         public void initialize() {
             idleSpindexer();
-            turret.setForward(true);
+            turret.setForward();
         }
 
         @Override
@@ -118,40 +118,21 @@ public class SuperStructure extends SubsystemBase {
         }
     }
 
-    public void RunIdleCommand() {
-        idleCommand.schedule();
-    }
-
-    public void RunIntakeCommand() {
-        intakeCommand.schedule();
-    }
-
-    public void shootAtTarget() {
-        if (vision.hasTarget()) {
-            turret.trackTarget();
-            shooter.trackTarget();
-            shooter.setFeedRPM(Constants.ShooterValues.FeedRpm);
-        } else {
-            turret.setTurretTargetDegrees(0.0, true);
-        }
-    }
-
-
     public class ExtendIntakeCommand extends SequentialCommandGroup {
-        public ExtendIntakeCommand() {
+        ExtendIntakeCommand() {
             addRequirements(intake, shooter, spindexer, turret, SuperStructure.this);
             addCommands(
                     new InstantCommand(intake::extendIntake),
                     new InstantCommand(() -> spindexer.setSpinRPM(30, SpindexerSubsystem.SpinnerDirection.Clockwise)),
                     new WaitCommand(0.5),
-                    new InstantCommand(() -> intake.intake(0.5)),
-                    spindexer.getAntiJamSpinCommand(15, 1.0)
+                    new InstantCommand(() -> intake.intake(0.5))
+//                    spindexer.getAntiJamSpinCommand(15, 1.0)
             );
         }
     }
 
     public class ExtendOuttakeCommand extends SequentialCommandGroup {
-        public ExtendOuttakeCommand() {
+        ExtendOuttakeCommand() {
             addRequirements(intake, shooter, spindexer, turret, SuperStructure.this);
             addCommands(
                     new InstantCommand(intake::extendIntake),
@@ -163,7 +144,7 @@ public class SuperStructure extends SubsystemBase {
     }
 
     public class RetractIntakeCommand extends SequentialCommandGroup {
-        public RetractIntakeCommand() {
+        RetractIntakeCommand() {
             addRequirements(intake, shooter, spindexer, turret, SuperStructure.this);
             addCommands(
                     new InstantCommand(() -> spindexer.setSpinRPM(20, SpindexerSubsystem.SpinnerDirection.Clockwise)),
@@ -176,37 +157,49 @@ public class SuperStructure extends SubsystemBase {
     }
 
     //HELPER METHODS
-    public void intake(double power, double spinRPM, SpindexerSubsystem.SpinnerDirection direction) {
+    @SuppressWarnings("SameParameterValue")
+    private void intake(double power, double spinRPM, SpindexerSubsystem.SpinnerDirection direction) {
         intake.intake(power);
         spindexer.setSpinRPM(spinRPM, direction);
         intake.extendIntake();
     }
 
-    public void trackTarget() {
+    private void trackTarget() {
         if (vision.hasTarget()) {
             turret.trackTarget();
             shooter.trackTarget();
         } else {
-            turret.setTurretTargetDegrees(0.0, true);
+            turret.setTurretTargetDegrees(0.0);
         }
     }
 
-    public void idleAll() {
+    private void shootAtTarget() {
+        if (vision.hasTarget()) {
+            turret.trackTarget();
+            shooter.trackTarget();
+            shooter.setFeedRPM(Constants.ShooterValues.FeedRpm);
+        } else {
+            turret.setTurretTargetDegrees(0.0);
+        }
+    }
+
+    private void idleAll() {
         idleShooter();
         idleIntake();
         idleSpindexer();
     }
 
-    public void idleIntake() {
+    private void idleIntake() {
         intake.stop();
         intake.retractIntake();
     }
 
-    public void idleShooter() {
-
+    private void idleShooter() {
+        shooter.setFlywheelRPM(0);
+        shooter.setFeedRPM(0);
     }
 
-    public void idleSpindexer() {
+    private void idleSpindexer() {
         spindexer.idle();
     }
 }

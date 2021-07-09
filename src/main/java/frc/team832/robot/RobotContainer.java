@@ -3,6 +3,7 @@ package frc.team832.robot;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.RunEndCommand;
 import frc.team832.lib.driverinput.controllers.Attack3;
 import frc.team832.lib.driverinput.controllers.Extreme3DPro;
@@ -11,6 +12,7 @@ import frc.team832.lib.driverinput.oi.DriverOI;
 import frc.team832.lib.driverinput.oi.SticksDriverOI;
 import frc.team832.lib.driverinput.oi.XboxDriverOI;
 import frc.team832.lib.power.GrouchPDP;
+import frc.team832.lib.util.OscarMath;
 import frc.team832.robot.subsystems.*;
 
 public class RobotContainer {
@@ -47,32 +49,35 @@ public class RobotContainer {
         drivetrainSubsystem = new DrivetrainSubsystem(pdp, driverOI);
 
 //        if (OperatorInterface.getConnectedControllerCount() > 1) {
-            configTestingCommands();
+            configOperatorCommands();
 //        }
     }
 
     private void configTestingCommands() {
-        stratComInterface.getArcadeBlackLeft().whenPressed(new InstantCommand(() -> spindexer.setSpinRPM(30, SpindexerSubsystem.SpinnerDirection.Clockwise)))
-                .whenReleased(new InstantCommand(spindexer::idle));
 
     }
 
     private void configOperatorCommands() {
         stratComInterface.getSC6().whileHeld(superStructure.idleCommand);
 
-        stratComInterface.getSC1().whenHeld(superStructure.targetingCommand);
-        stratComInterface.getSC2().whenHeld(superStructure.shootCommand);
+        stratComInterface.getSC1().whenHeld(superStructure.targetingCommand).whenReleased(superStructure.idleCommand);
+        stratComInterface.getSC2().whenHeld(superStructure.shootCommand).whenReleased(superStructure.idleCommand);
         stratComInterface.getSC3().whenHeld(superStructure.extendIntakeCommand).whenReleased(superStructure.retractIntakeCommand);
         stratComInterface.getSC4().whenHeld(superStructure.extendOuttakeCommand).whenReleased(superStructure.retractIntakeCommand);
 
         stratComInterface.getSingleToggle().whenHeld(new RunEndCommand(() -> climber.adjustHook(stratComInterface.getLeftSlider()), climber::stopExtend));
         stratComInterface.getSingleToggle().whenReleased(new InstantCommand(climber::retractHook));
 
+        var hoodTestCmd = new RunCommand(()-> {
+            var sliderPos = stratComInterface.getLeftSlider();
+            var angle = OscarMath.map(sliderPos, -1, 1, Constants.ShooterValues.HoodMinAngle, Constants.ShooterValues.HoodMaxAngle);
+            shooter.setHoodAngle(angle);
+        });
 
-        stratComInterface.getSCPlus().whileHeld(climber.startClimbUpCommand);
-        stratComInterface.getSCPlus().whenReleased(new InstantCommand(climber::lockClimb));
+        stratComInterface.getDoubleToggleUp().whenHeld(hoodTestCmd);
 
-        stratComInterface.getSCMinus().whileHeld(climber.startClimbDownCommand);
-        stratComInterface.getSCMinus().whenReleased(new InstantCommand(climber::lockClimb));
+        stratComInterface.getArcadeBlackRight().whenHeld(climber.startClimbUpCommand).whenReleased(new InstantCommand(climber::lockClimb));
+
+        stratComInterface.getArcadeWhiteRight().whenHeld(climber.startClimbDownCommand).whenReleased(new InstantCommand(climber::lockClimb));
     }
 }
