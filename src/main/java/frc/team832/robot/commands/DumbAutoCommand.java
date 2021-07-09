@@ -9,14 +9,9 @@ public class DumbAutoCommand extends SequentialCommandGroup {
     public DumbAutoCommand(DrivetrainSubsystem drivetrain, SuperStructure superStructure) {
         addRequirements(drivetrain, superStructure);
         addCommands(
-//                superStructure.targetingCommand,
-//                new WaitCommand(1),
-//                superStructure.shootCommand,
-//                new WaitCommand(3),
-//                new InstantCommand(() -> {COmman})
-//                superStructure.idleCommand,
-                new InstantCommand(() -> drivetrain.setWheelVolts(-1.5, 1.5),drivetrain),
-                new WaitCommand(0.6),
+                new AutoShootCommandGroup(superStructure),
+                new InstantCommand(() -> drivetrain.setWheelVolts(-1.0, 1.0),drivetrain),
+                new WaitCommand(0.75),
                 new InstantCommand(() -> drivetrain.setWheelVolts(0.0, 0.0), drivetrain)
         );
     }

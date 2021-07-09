@@ -26,7 +26,7 @@ public class TurretSubsystem extends SubsystemBase {
     private final PDPSlot pdpSlot;
     private final ProfiledPIDController pid;
 
-    private NetworkTableEntry dashboard_turretPos, dashboard_turretPIDEffort, dashboard_turretTarget;
+    private NetworkTableEntry dashboard_turretPos, dashboard_turretPIDEffort, dashboard_turretTarget, dashboard_turretFF;
 
     public TurretSubsystem(GrouchPDP pdp, VisionSubsystem vision) {
         setName("Turret");
@@ -48,6 +48,7 @@ public class TurretSubsystem extends SubsystemBase {
         dashboard_turretPos = DashboardManager.addTabItem(this, "Position", 0.0);
         dashboard_turretPIDEffort = DashboardManager.addTabItem(this, "Effort", 0.0);
         dashboard_turretTarget = DashboardManager.addTabItem(this, "Target", 0.0);
+        dashboard_turretFF = DashboardManager.addTabItem(this, "FF", 0.0);
 
         initSuccessful = turretMotor.getCANConnection();
     }
@@ -57,7 +58,10 @@ public class TurretSubsystem extends SubsystemBase {
     }
 
     private void runTurretPid() {
-        turretMotor.set(pid.calculate(getDegrees(), turretTargetDeg));
+        double ff = TurretValues.TurretFF.calculate( pid.getGoal().velocity);
+        dashboard_turretFF.setDouble(ff);
+        turretMotor.set(pid.calculate(getDegrees(), turretTargetDeg) + ff);
+
     }
 
     public void updateDashboardData() {

@@ -12,14 +12,6 @@ public class SuperStructure extends SubsystemBase {
     private final TurretSubsystem turret;
     private final VisionSubsystem vision;
 
-    public final IdleCommand idleCommand;
-    public final TargetingCommand targetingCommand;
-    public final ShootCommandGroup shootCommand;
-    public final IntakeCommand intakeCommand;
-    public final ExtendIntakeCommand extendIntakeCommand;
-    public final ExtendOuttakeCommand extendOuttakeCommand;
-    public final RetractIntakeCommand retractIntakeCommand;
-
     private final double spindexerIntakeRpm = 15;
 
     public SuperStructure(IntakeSubsystem intake, ShooterSubsystem shooter, SpindexerSubsystem spindexer, TurretSubsystem turret, VisionSubsystem vision) {
@@ -29,15 +21,36 @@ public class SuperStructure extends SubsystemBase {
         this.turret = turret;
         this.vision = vision;
 
-        idleCommand = new IdleCommand();
-        targetingCommand = new TargetingCommand();
-        shootCommand = new ShootCommandGroup();
-        intakeCommand = new IntakeCommand();
-        extendIntakeCommand = new ExtendIntakeCommand();
-        extendOuttakeCommand = new ExtendOuttakeCommand();
-        retractIntakeCommand = new RetractIntakeCommand();
 
         DashboardManager.addTab(this);
+    }
+
+    public IdleCommand getIdleCommand() {
+        return new IdleCommand();
+    }
+
+    public TargetingCommand getTargetingCommand() {
+        return new TargetingCommand();
+    }
+
+    public ShootCommandGroup getShootCommand() {
+        return new ShootCommandGroup();
+    }
+
+    public IntakeCommand getIntakeCommand() {
+        return new IntakeCommand();
+    }
+
+    public ExtendIntakeCommand getExtendIntakeCommand() {
+        return new ExtendIntakeCommand();
+    }
+
+    public ExtendOuttakeCommand getExtendOuttakeCommand() {
+        return new ExtendOuttakeCommand();
+    }
+
+    public RetractIntakeCommand getRetractIntakeCommand() {
+        return new RetractIntakeCommand();
     }
 
     public void setSoindexerRPM(double rpm, SpindexerSubsystem.SpinnerDirection direction) {
@@ -98,7 +111,7 @@ public class SuperStructure extends SubsystemBase {
                     new SequentialCommandGroup(
                             new WaitCommand(0.5),
                             new FunctionalCommand(
-                                    () -> spindexer.setSpinRPM(30, SpindexerSubsystem.SpinnerDirection.Clockwise),
+                                    () -> spindexer.setSpinRPM(40, SpindexerSubsystem.SpinnerDirection.Clockwise),
                                     SuperStructure.this::shootAtTarget,
                                     (interrupted) -> { idleSpindexer(); idleShooter(); },
                                     () -> false
@@ -124,7 +137,13 @@ public class SuperStructure extends SubsystemBase {
             trackTarget();
 //			spindexer.setTargetRotation(getNearestSafeRotationRelativeToFeeder());might be unnecessary
         }
+
+        @Override
+        public void end(boolean interrupted) {
+            idleAll();
+        }
     }
+
 
     public class ExtendIntakeCommand extends SequentialCommandGroup {
         ExtendIntakeCommand() {

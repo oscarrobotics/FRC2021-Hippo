@@ -84,9 +84,9 @@ public class SpindexerSubsystem extends SubsystemBase {
         }
     }
 
-//    public Command getAntiJamSpinCommand(double rpmTolerance, double resetTime) {
-//        return new AntiStall(rpmTolerance, resetTime);
-//    }
+    public Command getAntiJamSpinCommand(double rpmTolerance, double resetTime) {
+        return new AntiStall(rpmTolerance, resetTime);
+    }
 
     public boolean isStalling(double rpmTolerance) {
         return Math.abs(spindexerTargetRPM) > 0 && Math.abs(getRPM() - spindexerTargetRPM) > rpmTolerance;
@@ -115,43 +115,43 @@ public class SpindexerSubsystem extends SubsystemBase {
         setTargetRPM(0);
     }
 
-//    public class AntiStall extends CommandBase {
-//        double lastSwitchSec = 0;
-//        double fpgaSecs;
-//        double vibrateStartTime;
-//        boolean vibrate = false;
-//        final double tolerance;
-//        final double resetTime;
-//
-//        public AntiStall(double tolerance, double resetTime) {
-//            this.tolerance = tolerance;
-//            this.resetTime = resetTime;
-//        }
-//
-//        @Override
-//        public void execute() {
-//            fpgaSecs = Timer.getFPGATimestamp();
-//            if (isStalling(tolerance) && (fpgaSecs - lastSwitchSec >= resetTime) && !vibrate) {
-//                vibrate = true;
-//                vibrateStartTime = fpgaSecs;
-//                lastSwitchSec = fpgaSecs;
-//            }
-//            if (vibrate && fpgaSecs - vibrateStartTime < resetTime * 0.75) {
-//                vibrate(4, 20);
-//            } else {
-//                vibrate = false;
-//                setSpinRPM(30, spinDirection);
-//            }
-//
-//        }
-//
-//        public void vibrate(double frequency, double rpm) {
-//            if (vibrateCount > (1 / frequency) * 25) {
-//                setSpinRPM(rpm, spinDirection == SpinnerDirection.Clockwise ? SpinnerDirection.CounterClockwise : SpinnerDirection.Clockwise);
-//                vibrateCount = 0;
-//                return;
-//            }
-//            vibrateCount++;
-//        }
-//    }
+    public class AntiStall extends CommandBase {
+        double lastSwitchSec = 0;
+        double fpgaSecs;
+        double vibrateStartTime;
+        boolean vibrate = false;
+        final double tolerance;
+        final double resetTime;
+
+        public AntiStall(double tolerance, double resetTime) {
+            this.tolerance = tolerance;
+            this.resetTime = resetTime;
+        }
+
+        @Override
+        public void execute() {
+            fpgaSecs = Timer.getFPGATimestamp();
+            if (isStalling(tolerance) && (fpgaSecs - lastSwitchSec >= resetTime) && !vibrate) {
+                vibrate = true;
+                vibrateStartTime = fpgaSecs;
+                lastSwitchSec = fpgaSecs;
+            }
+            if (vibrate && fpgaSecs - vibrateStartTime < resetTime * 0.75) {
+                vibrate(4, 20);
+            } else {
+                vibrate = false;
+                setSpinRPM(30, spinDirection);
+            }
+
+        }
+
+        public void vibrate(double frequency, double rpm) {
+            if (vibrateCount > (1 / frequency) * 25) {
+                setSpinRPM(rpm, spinDirection == SpinnerDirection.Clockwise ? SpinnerDirection.CounterClockwise : SpinnerDirection.Clockwise);
+                vibrateCount = 0;
+                return;
+            }
+            vibrateCount++;
+        }
+    }
 }

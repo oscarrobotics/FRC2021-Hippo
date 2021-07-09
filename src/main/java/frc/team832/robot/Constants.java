@@ -206,9 +206,11 @@ public class Constants {
         public static final int TurretCenterVisionPosition = 0;
 
         //oscilation period is 0.2785 with kp of 0.07
-        public static final double kP = 0.013;
-        public static final double kI = 0.00015;
-        public static final double kD = 0.00001;//0.0001
+        public static final double kP = 0.01;
+        public static final double kI = 0.0001;
+        public static final double kD = 0.0;//0.0001
+
+        public static final SimpleMotorFeedforward TurretFF  = new SimpleMotorFeedforward(0.05,  Motor.kNEO550.kv * 200);
 
         private static final double maxVelocityRads = Units.rotationsPerMinuteToRadiansPerSecond(120);
         private static final double maxAccelRads = Units.rotationsPerMinuteToRadiansPerSecond(240);

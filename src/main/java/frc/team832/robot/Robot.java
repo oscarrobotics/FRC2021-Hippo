@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.team832.lib.CANDevice;
 import frc.team832.lib.motorcontrol.NeutralMode;
+import frc.team832.robot.commands.AutoShootCommandGroup;
 import frc.team832.robot.commands.DumbAutoCommand;
 import frc.team832.robot.subsystems.*;
 
@@ -28,8 +29,10 @@ public class Robot extends TimedRobot {
   private final VisionSubsystem vision = robotContainer.vision;
   private final SpindexerSubsystem spindexer = robotContainer.spindexer;
   private final ClimbSubsystem climber = robotContainer.climber;
+  private final SuperStructure superStructure = robotContainer.superStructure;
 
-  private final Command autoCommand = new DumbAutoCommand(drivetrain, robotContainer.superStructure);
+//  private final Command autoCommand = new DumbAutoCommand(drivetrain, robotContainer.superStructure);
+  private final Command autoCommand = new DumbAutoCommand(drivetrain, superStructure);
 
   @Override
   public void robotInit() {
@@ -97,6 +100,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
+    // set neutral modes
     NeutralMode mode = NeutralMode.kBrake;
     drivetrain.setNeutralMode(mode);
     shooter.setFlyheelNeutralMode(NeutralMode.kCoast);
@@ -104,16 +108,46 @@ public class Robot extends TimedRobot {
     shooter.setHoodNeutralMode(mode);
     spindexer.setNeutralMode(mode);
     turret.setNeutralMode(mode);
+    intake.setNeutralMode(NeutralMode.kCoast);
+
+    // init hood
     shooter.zeroHood();
     shooter.setHoodAngle(Constants.ShooterValues.HoodMinAngle);
-    intake.setNeutralMode(NeutralMode.kCoast);
+
+    // init climb deploy
     climber.zeroDeploy();
-//
+
+    // start auto command
     autoCommand.schedule();
   }
 
   @Override
+  public void autonomousPeriodic() { }
+
+  @Override
+  public void teleopInit() {
+    // stop auto command
+    autoCommand.cancel();
+
+    // set neutral modes
+    NeutralMode brake = NeutralMode.kBrake;
+    drivetrain.setNeutralMode(brake);
+    shooter.setFlyheelNeutralMode(NeutralMode.kCoast);
+    shooter.setFeederNeutralMode(brake);
+    shooter.setHoodNeutralMode(brake);
+    spindexer.setNeutralMode(brake);
+    turret.setNeutralMode(brake);
+
+    // reapply hood angle
+    shooter.setHoodAngle(Constants.ShooterValues.HoodMinAngle);
+  }
+
+  @Override
+  public void teleopPeriodic() { }
+
+  @Override
   public void disabledInit() {
+    // set neutral modes
     NeutralMode coast = NeutralMode.kCoast;
     drivetrain.setNeutralMode(coast);
     shooter.setFlyheelNeutralMode(coast);
@@ -122,40 +156,11 @@ public class Robot extends TimedRobot {
     spindexer.setNeutralMode(coast);
     turret.setNeutralMode(coast);
     intake.setNeutralMode(coast);
+
+    // lock climber
     climber.lockClimb();
   }
 
   @Override
-  public void disabledPeriodic() {
-
-  }
-
-  @Override
-  public void autonomousPeriodic() {
-  }
-
-  @Override
-  public void teleopInit() {
-    autoCommand.cancel();
-    NeutralMode brake = NeutralMode.kBrake;
-    drivetrain.setNeutralMode(brake);
-    shooter.setFlyheelNeutralMode(NeutralMode.kCoast);
-    shooter.setFeederNeutralMode(brake);
-    shooter.setHoodNeutralMode(brake);
-    spindexer.setNeutralMode(brake);
-    turret.setNeutralMode(brake);
-    shooter.setHoodAngle(Constants.ShooterValues.HoodMinAngle);
-  }
-
-  @Override
-  public void teleopPeriodic() {
-
-  }
-
-  @Override
-  public void testInit() {
-//    drivetrainSubsystem.driveMusic.play();
-  }
-
-
+  public void disabledPeriodic() { }
 }

@@ -84,11 +84,11 @@ public class ClimbSubsystem extends SubsystemBase {
     }
 
     public void unwindWinch() {
-        climbPower = -0.25;
+        climbPower = -0.2;
     }
 
     public void windWinch() {
-        climbPower = 0.75;
+        climbPower = 0.8;
     }
 
     public boolean isWinchSafe() {

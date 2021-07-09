@@ -64,33 +64,21 @@ public class RobotContainer {
 
         stratComInterface.getDoubleToggleUp().whenHeld(hoodTestCmd);
 
-        stratComInterface.getSC6().whenHeld(new RunEndCommand(() -> spindexer.setSpinRPM(50, SpindexerSubsystem.SpinnerDirection.Clockwise), spindexer::idle, spindexer));
     }
 
     private void configOperatorCommands() {
-        stratComInterface.getSC6().whileHeld(superStructure.idleCommand);
+        stratComInterface.getSC3().whileHeld(superStructure.getIdleCommand());
 
-        stratComInterface.getSC1().whenHeld(superStructure.targetingCommand).whenReleased(superStructure.idleCommand);
+        stratComInterface.getSC1().whenHeld(superStructure.getTargetingCommand()).whenReleased(superStructure.getIdleCommand());
+        stratComInterface.getSC2().whenHeld(superStructure.getShootCommand()).whenReleased(superStructure.getIdleCommand());
 
-        stratComInterface.getSC4().whenHeld(new InstantCommand(() -> {
-            superStructure.setSoindexerRPM(40, SpindexerSubsystem.SpinnerDirection.Clockwise);
-        }));
-
-        stratComInterface.getSC2().whenHeld(new InstantCommand(() -> {
-            superStructure.setFeedRpm(4000);
-        }));
-
-        stratComInterface.getSC5().whenHeld(new InstantCommand(() -> superStructure.setSoindexerRPM(40, SpindexerSubsystem.SpinnerDirection.CounterClockwise)));
-
-        stratComInterface.getSCSideTop().whenHeld(superStructure.extendIntakeCommand).whenReleased(superStructure.retractIntakeCommand);
-        stratComInterface.getSCSideMid().whenHeld(superStructure.extendOuttakeCommand).whenReleased(superStructure.retractIntakeCommand);
+        stratComInterface.getSCSideTop().whenHeld(superStructure.getExtendIntakeCommand()).whenReleased(superStructure.getRetractIntakeCommand());
+        stratComInterface.getSCSideMid().whenHeld(superStructure.getExtendOuttakeCommand()).whenReleased(superStructure.getRetractIntakeCommand());
 
         stratComInterface.getSingleToggle().whenHeld(new RunEndCommand(() -> climber.adjustHook(stratComInterface.getLeftSlider()), climber::stopExtend));
         stratComInterface.getSingleToggle().whenReleased(new InstantCommand(climber::retractHook));
 
-
         stratComInterface.getArcadeBlackRight().whenHeld(climber.startClimbUpCommand).whenReleased(new InstantCommand(climber::lockClimb));
-
         stratComInterface.getArcadeWhiteRight().whenHeld(climber.startClimbDownCommand).whenReleased(new InstantCommand(climber::lockClimb));
     }
 }
