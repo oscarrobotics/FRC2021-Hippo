@@ -50,7 +50,9 @@ public class RobotContainer {
 
 //        if (OperatorInterface.getConnectedControllerCount() > 1) {
             configOperatorCommands();
+//        configTestingCommands();
 //        }
+
     }
 
     private void configTestingCommands() {
@@ -62,13 +64,24 @@ public class RobotContainer {
 
         stratComInterface.getDoubleToggleUp().whenHeld(hoodTestCmd);
 
+        stratComInterface.getSC6().whenHeld(new RunEndCommand(() -> spindexer.setSpinRPM(50, SpindexerSubsystem.SpinnerDirection.Clockwise), spindexer::idle, spindexer));
     }
 
     private void configOperatorCommands() {
         stratComInterface.getSC6().whileHeld(superStructure.idleCommand);
 
         stratComInterface.getSC1().whenHeld(superStructure.targetingCommand).whenReleased(superStructure.idleCommand);
-        stratComInterface.getSC2().whenHeld(superStructure.shootCommand).whenReleased(superStructure.idleCommand);
+
+        stratComInterface.getSC4().whenHeld(new InstantCommand(() -> {
+            superStructure.setSoindexerRPM(40, SpindexerSubsystem.SpinnerDirection.Clockwise);
+        }));
+
+        stratComInterface.getSC2().whenHeld(new InstantCommand(() -> {
+            superStructure.setFeedRpm(4000);
+        }));
+
+        stratComInterface.getSC5().whenHeld(new InstantCommand(() -> superStructure.setSoindexerRPM(40, SpindexerSubsystem.SpinnerDirection.CounterClockwise)));
+
         stratComInterface.getSCSideTop().whenHeld(superStructure.extendIntakeCommand).whenReleased(superStructure.retractIntakeCommand);
         stratComInterface.getSCSideMid().whenHeld(superStructure.extendOuttakeCommand).whenReleased(superStructure.retractIntakeCommand);
 

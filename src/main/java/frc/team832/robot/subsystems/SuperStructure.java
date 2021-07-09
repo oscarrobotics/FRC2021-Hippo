@@ -40,6 +40,14 @@ public class SuperStructure extends SubsystemBase {
         DashboardManager.addTab(this);
     }
 
+    public void setSoindexerRPM(double rpm, SpindexerSubsystem.SpinnerDirection direction) {
+        spindexer.setSpinRPM(rpm, direction);
+    }
+
+    public void setFeedRpm(double rpm){
+        shooter.setFeedRPM(rpm);
+    }
+
     //COMMANDS:
     private class IdleCommand extends InstantCommand {
         IdleCommand() {

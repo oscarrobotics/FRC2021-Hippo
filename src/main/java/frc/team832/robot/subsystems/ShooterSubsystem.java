@@ -195,7 +195,8 @@ public class ShooterSubsystem extends SubsystemBase {
 
     void trackTarget() {
         setFlywheelRPM(6500);
-        setHoodAngle(vision.getSmartHoodAngle());
+//        setHoodAngle(vision.getSmartHoodAngle());
+        setHoodAngle(46);
 //        setHoodAngle(ShooterValues.HoodTrenchLineAngle);
     }
 

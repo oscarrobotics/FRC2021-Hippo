@@ -9,9 +9,11 @@ package frc.team832.robot;
 
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.team832.lib.CANDevice;
 import frc.team832.lib.motorcontrol.NeutralMode;
+import frc.team832.robot.commands.DumbAutoCommand;
 import frc.team832.robot.subsystems.*;
 
 public class Robot extends TimedRobot {
@@ -26,6 +28,8 @@ public class Robot extends TimedRobot {
   private final VisionSubsystem vision = robotContainer.vision;
   private final SpindexerSubsystem spindexer = robotContainer.spindexer;
   private final ClimbSubsystem climber = robotContainer.climber;
+
+  private final Command autoCommand = new DumbAutoCommand(drivetrain, robotContainer.superStructure);
 
   @Override
   public void robotInit() {
@@ -105,7 +109,7 @@ public class Robot extends TimedRobot {
     intake.setNeutralMode(NeutralMode.kCoast);
     climber.zeroDeploy();
 //
-//    autoCommand.schedule();
+    autoCommand.schedule();
   }
 
   @Override
@@ -132,10 +136,10 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
-//    autoCommand.cancel();
+    autoCommand.cancel();
     NeutralMode brake = NeutralMode.kBrake;
     drivetrain.setNeutralMode(brake);
-    shooter.setFlyheelNeutralMode(brake);
+    shooter.setFlyheelNeutralMode(NeutralMode.kCoast);
     shooter.setFeederNeutralMode(brake);
     shooter.setHoodNeutralMode(brake);
     spindexer.setNeutralMode(brake);
