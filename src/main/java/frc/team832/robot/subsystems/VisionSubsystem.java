@@ -48,8 +48,8 @@ public class VisionSubsystem extends SubsystemBase {
 
     private void updateShooterCalculations(double pitch, double yaw) {
         double distance = PhotonUtils.calculateDistanceToTargetMeters(CameraHeightMeters, PowerportHeightMeters, Math.toRadians(CameraAngle), Math.toRadians(pitch));
-        double angle = Math.log((0.5 * distance) + 1) * 40;
-        exitAngle = angle + 52;
+        double angle = (distance * 0.2896) + 42.803;
+        exitAngle = angle;
 
         dashboard_visionYaw.setDouble(yaw);
         dashboard_visionPitch.setDouble(pitch);

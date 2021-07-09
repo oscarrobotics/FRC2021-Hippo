@@ -54,6 +54,13 @@ public class RobotContainer {
     }
 
     private void configTestingCommands() {
+        var hoodTestCmd = new RunCommand(()-> {
+            var sliderPos = stratComInterface.getLeftSlider();
+            var angle = OscarMath.map(sliderPos, -1, 1, Constants.ShooterValues.HoodMinAngle, Constants.ShooterValues.HoodMaxAngle);
+            shooter.setHoodAngle(angle);
+        });
+
+        stratComInterface.getDoubleToggleUp().whenHeld(hoodTestCmd);
 
     }
 
@@ -62,19 +69,12 @@ public class RobotContainer {
 
         stratComInterface.getSC1().whenHeld(superStructure.targetingCommand).whenReleased(superStructure.idleCommand);
         stratComInterface.getSC2().whenHeld(superStructure.shootCommand).whenReleased(superStructure.idleCommand);
-        stratComInterface.getSC3().whenHeld(superStructure.extendIntakeCommand).whenReleased(superStructure.retractIntakeCommand);
-        stratComInterface.getSC4().whenHeld(superStructure.extendOuttakeCommand).whenReleased(superStructure.retractIntakeCommand);
+        stratComInterface.getSCSideTop().whenHeld(superStructure.extendIntakeCommand).whenReleased(superStructure.retractIntakeCommand);
+        stratComInterface.getSCSideMid().whenHeld(superStructure.extendOuttakeCommand).whenReleased(superStructure.retractIntakeCommand);
 
         stratComInterface.getSingleToggle().whenHeld(new RunEndCommand(() -> climber.adjustHook(stratComInterface.getLeftSlider()), climber::stopExtend));
         stratComInterface.getSingleToggle().whenReleased(new InstantCommand(climber::retractHook));
 
-        var hoodTestCmd = new RunCommand(()-> {
-            var sliderPos = stratComInterface.getLeftSlider();
-            var angle = OscarMath.map(sliderPos, -1, 1, Constants.ShooterValues.HoodMinAngle, Constants.ShooterValues.HoodMaxAngle);
-            shooter.setHoodAngle(angle);
-        });
-
-        stratComInterface.getDoubleToggleUp().whenHeld(hoodTestCmd);
 
         stratComInterface.getArcadeBlackRight().whenHeld(climber.startClimbUpCommand).whenReleased(new InstantCommand(climber::lockClimb));
 
