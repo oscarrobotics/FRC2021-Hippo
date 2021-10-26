@@ -30,8 +30,6 @@ public class ShooterSubsystem extends SubsystemBase {
     private final CANSparkMax primaryMotor, secondaryMotor, feederMotor;
     private final REVSmartServo_Continuous hoodServo;
 
-
-
     private final NetworkTableEntry dashboard_wheelRPM, dashboard_flywheelFF, dashboard_hoodPos, dashboard_hoodAngle, dashboard_wheelTargetRPM,
             dashboard_feedWheelRPM, dashboard_feedWheelTargetRPM, dashboard_feedFF, dashboard_potRotations;
 
@@ -190,13 +188,16 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public boolean atShootingRpm() {
-        return OscarMath.withinEpsilon(300, flywheelTargetRPM, getFlywheelRPM_Encoder());
+        return OscarMath.withinEpsilon(300, flywheelTarget, getFlywheelRPM_Encoder());
     }
 
     public boolean atHoodAngle() {
         return OscarMath.withinEpsilon(1, getHoodTargetAngle(), getHoodAngle());
     }
 
+    public double getHoodTargetAngle() {
+        return OscarMath.map(hoodTarget, Constants.ShooterValues.HoodTop, Constants.ShooterValues.HoodBottom, Constants.ShooterValues.HoodMaxAngle, Constants.ShooterValues.HoodMinAngle);
+    }
 
     public void setFeederNeutralMode(NeutralMode mode) {
         feederMotor.setNeutralMode(mode);
