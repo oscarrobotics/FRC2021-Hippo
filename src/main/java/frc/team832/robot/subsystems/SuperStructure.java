@@ -87,6 +87,11 @@ public class SuperStructure extends SubsystemBase {
         }
     }
 
+    public boolean readyToShoot() {
+        return shooter.atShootingRpm() && shooter.atHoodAngle() && turret.atTargetAngle();
+    }
+
+
     public class ShootCommandGroup extends ParallelCommandGroup {
         public ShootCommandGroup() {
             addRequirements(shooter, intake, spindexer, turret, SuperStructure.this);
@@ -209,11 +214,6 @@ public class SuperStructure extends SubsystemBase {
 
     //HELPER METHODS
 
-    public boolean readyToShoot() {
-        return shooter.atShootingRpm() && shooter.atHoodAngle() && turret.atTargetAngle();
-    }
-
-
     public void intake(double power, double spinRPM, SpindexerSubsystem.SpinnerDirection direction) {
         intake.intake(power);
         spindexer.setSpinRPM(spinRPM, direction);
@@ -239,21 +239,8 @@ public class SuperStructure extends SubsystemBase {
     }
 
     public void idleAll() {
-        idleShooter();
-        idleIntake();
-        idleSpindexer();
-    }
-
-    public void idleIntake() {
-        intake.stop();
-        intake.retractIntake();
-    }
-
-    public void idleShooter() {
-
-    }
-
-    public void idleSpindexer() {
-        spindexer.idle();
+        shooter.idleAll();
+        intake.idleAll();
+        spindexer.idleAll();
     }
 }

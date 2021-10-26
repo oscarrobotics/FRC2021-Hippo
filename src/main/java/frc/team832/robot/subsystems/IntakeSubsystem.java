@@ -56,4 +56,9 @@ public class IntakeSubsystem extends SubsystemBase {
         OscarMath.clip(power, 0, 1);
         intakeMotor.set(-power);
     }
+
+    public void idleAll() {
+        stop();
+        retractIntake();
+    }
 }

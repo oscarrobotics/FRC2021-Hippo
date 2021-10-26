@@ -189,6 +189,15 @@ public class ShooterSubsystem extends SubsystemBase {
         return OscarMath.withinEpsilon(500, feedTarget, feederMotor.getSensorVelocity());
     }
 
+    public boolean atShootingRpm() {
+        return OscarMath.withinEpsilon(300, flywheelTargetRPM, getFlywheelRPM_Encoder());
+    }
+
+    public boolean atHoodAngle() {
+        return OscarMath.withinEpsilon(1, getHoodTargetAngle(), getHoodAngle());
+    }
+
+
     public void setFeederNeutralMode(NeutralMode mode) {
         feederMotor.setNeutralMode(mode);
     }

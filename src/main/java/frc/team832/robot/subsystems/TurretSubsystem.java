@@ -143,6 +143,10 @@ public class TurretSubsystem extends SubsystemBase {
         return nextVoltage;
     }
 
+    public boolean atTargetAngle() {
+        return OscarMath.withinEpsilon(3, turretTargetDeg, getDegrees());
+    }
+
     public void setTurretTargetDegrees(double pos, boolean visionMode) {
         isVision = visionMode;
         turretTargetDeg = pos;
