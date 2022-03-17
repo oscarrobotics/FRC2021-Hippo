@@ -1,6 +1,7 @@
 package frc.team832.robot.subsystems;
 
 import edu.wpi.first.wpilibj2.command.*;
+import frc.team832.lib.driverinput.controllers.StratComInterface;
 import frc.team832.lib.driverstation.dashboard.DashboardManager;
 import frc.team832.robot.Constants;
 
@@ -33,8 +34,9 @@ public class SuperStructure extends SubsystemBase {
         return new TargetingCommand();
     }
 
-    public ShootCommandGroup getShootCommand() {
-        return new ShootCommandGroup();
+
+    public ShootCommandGroup getShootCommand(int spindexerRPM) {
+        return new ShootCommandGroup(spindexerRPM);
     }
 
     public IntakeCommand getIntakeCommand() {
@@ -102,7 +104,7 @@ public class SuperStructure extends SubsystemBase {
     }
 
     public class ShootCommandGroup extends ParallelCommandGroup {
-        ShootCommandGroup() {
+        ShootCommandGroup(int spindexerRPM) {
             addRequirements(shooter, intake, spindexer, turret, SuperStructure.this);
             addCommands(
                     // tracking target
@@ -111,7 +113,7 @@ public class SuperStructure extends SubsystemBase {
                     new SequentialCommandGroup(
                             new WaitCommand(0.5),
                             new FunctionalCommand(
-                                    () -> spindexer.setSpinRPM(40, SpindexerSubsystem.SpinnerDirection.Clockwise),
+                                    () -> spindexer.setSpinRPM(spindexerRPM, SpindexerSubsystem.SpinnerDirection.Clockwise),
                                     SuperStructure.this::shootAtTarget,
                                     (interrupted) -> { idleSpindexer(); idleShooter(); },
                                     () -> false
@@ -204,7 +206,7 @@ public class SuperStructure extends SubsystemBase {
         if (vision.hasTarget()) {
             turret.trackTarget();
             shooter.trackTarget();
-            shooter.setFeedRPM(Constants.ShooterValues.FeedRpm);
+            shooter.setFeedPow(1);
         } else {
             turret.setTurretTargetDegrees(0.0);
         }
@@ -224,6 +226,7 @@ public class SuperStructure extends SubsystemBase {
     private void idleShooter() {
         shooter.setFlywheelRPM(0);
         shooter.setFeedRPM(0);
+        shooter.setFeedPow(0);
     }
 
     private void idleSpindexer() {

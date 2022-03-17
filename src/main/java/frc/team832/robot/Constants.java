@@ -153,7 +153,7 @@ public class Constants {
 
         public static final double HoodReduction = 1f/95f;
 
-        public static final double HoodkP = 0.125;
+        public static final double HoodkP = 0.15;
 
         public static final double HoodMaxAngle = 65;
         public static final double HoodMinAngle = 25;

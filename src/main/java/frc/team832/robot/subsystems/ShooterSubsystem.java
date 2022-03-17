@@ -175,6 +175,10 @@ public class ShooterSubsystem extends SubsystemBase {
         feedTargetRPM = rpm;
     }
 
+    public void setFeedPow(double power) {
+        feederMotor.set(power);
+    }
+
     void setFlywheelRPM(double wheelTargetRPM) {
         flywheelTargetRPM = wheelTargetRPM;
     }
@@ -194,15 +198,15 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     void trackTarget() {
-        setFlywheelRPM(6500);
+        setFlywheelRPM(6750);
 //        setHoodAngle(vision.getSmartHoodAngle());
-        setHoodAngle(46);
+        setHoodAngle(54);
 //        setHoodAngle(ShooterValues.HoodTrenchLineAngle);
     }
 
     public void updateControlLoops(){
         runFlywheelPid();
-        runFeederPid();
+//        runFeederPid();
         runHoodPid();
     }
 

@@ -13,7 +13,7 @@ public class AutoShootCommandGroup extends SequentialCommandGroup {
 
         addCommands(
                 superStructure.getTargetingCommand().withTimeout(2.0),
-                superStructure.getShootCommand().withTimeout(7.5),
+                superStructure.getShootCommand(20).withTimeout(10),
                 superStructure.getIdleCommand() // instant command, ends immediately
         );
     }

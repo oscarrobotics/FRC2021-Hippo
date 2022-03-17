@@ -78,7 +78,7 @@ public class TurretSubsystem extends SubsystemBase {
         double visionOffset = 0;
         if (vision.hasTarget()) visionOffset = vision.getTarget().getYaw();
 
-        setTurretTargetDegrees(visionOffset + getDegrees());
+        setTurretTargetDegrees(visionOffset + getDegrees() - 2);
     }
 
     double getRotations() {

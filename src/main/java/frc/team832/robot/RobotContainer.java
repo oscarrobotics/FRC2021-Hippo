@@ -70,7 +70,10 @@ public class RobotContainer {
         stratComInterface.getSC3().whileHeld(superStructure.getIdleCommand());
 
         stratComInterface.getSC1().whenHeld(superStructure.getTargetingCommand()).whenReleased(superStructure.getIdleCommand());
-        stratComInterface.getSC2().whenHeld(superStructure.getShootCommand()).whenReleased(superStructure.getIdleCommand());
+        stratComInterface.getSC2().whenHeld(superStructure.getShootCommand(35)).whenReleased(superStructure.getIdleCommand());
+
+        stratComInterface.getSC4().whenPressed(new InstantCommand(() -> spindexer.setSpinRPM(35, SpindexerSubsystem.SpinnerDirection.CounterClockwise))).whenReleased(new InstantCommand(spindexer::idle));
+        stratComInterface.getSC5().whenPressed(new InstantCommand(() -> shooter.setFeedPow(-1))).whenReleased(() -> {shooter.setFeedPow(0);});
 
         stratComInterface.getSCSideTop().whenHeld(superStructure.getExtendIntakeCommand()).whenReleased(superStructure.getRetractIntakeCommand());
         stratComInterface.getSCSideMid().whenHeld(superStructure.getExtendOuttakeCommand()).whenReleased(superStructure.getRetractIntakeCommand());
